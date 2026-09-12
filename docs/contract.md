@@ -138,11 +138,12 @@ Operational errors contain no metrics.
 Bag ticks start at zero and increase by one.
 Each timestamp equals its tick number multiplied by the header's tick duration.
 The final newline and declared record count are required.
-These checks detect truncation without implementing motion equations or bag generation.
+These checks detect truncation without implementing motion equations.
+The [bag recorder](bags.md) produces this format from completed simulations.
 
 ## File publication rules
 
-These rules govern future producers. This slice implements only read-only validation.
+These rules govern file producers. The bag recorder implements them for recordings.
 
 1. Validate a complete file before publication.
 2. Serialize competing writes to the same identity through the durable owner.
@@ -150,7 +151,7 @@ These rules govern future producers. This slice implements only read-only valida
 4. Accept identical content as a duplicate. Reject changed content.
 5. Write a temporary file in the destination directory with a `.tmp` suffix.
 6. Flush its content, synchronize the file, and close it.
-7. Atomically rename the temporary file to its final name without replacing a conflicting file.
+7. Atomically publish the final name without replacing a conflicting file.
 8. Synchronize the destination directory before reporting publication success.
 
 Readers ignore temporary files and validate complete files before use.
@@ -158,10 +159,15 @@ The validator rejects an explicitly selected temporary file.
 Final file names use the identifier alphabet from the schemas.
 Producers preserve immutable files until explicit project cleanup.
 
+The bag recorder uses an atomic hard link, then removes the temporary name.
+Creating the link fails if the final name already exists; concurrent publishers cannot overwrite each other.
+Matching existing bytes count as duplicate output. Different or unreadable bytes produce a conflict.
+Other producers will need the same publication guarantees.
+
 Future intake records receipt only after durable queue import.
 Future workers publish completion only after the result file is durable and readable.
 A database outbox and startup recovery must repair interruptions between durable state and file publication.
-A rename alone does not implement queue acceptance, duplicate prevention, or crash recovery.
+Atomic file publication alone does not implement queue acceptance or worker recovery.
 
 ## Check a conflict
 

@@ -24,6 +24,7 @@ Add necessary technical terms when a change introduces them.
 | Execution | One identified simulation run. |
 | Exit code | A number that reports command success or failure to the shell. |
 | Go | The programming language and toolchain used to build Yamata. |
+| Hard link | A directory entry that names the same file as another entry. |
 | GNU Make | The build tool that runs targets defined in `Makefile`. |
 | Job | Complete instructions for a run or an analysis of a saved bag. |
 | JSON | JavaScript Object Notation, the structured format used by exchange documents. |
@@ -33,6 +34,7 @@ Add necessary technical terms when a change introduces them.
 | Module | A group of Go packages with a module path and a declared Go version. |
 | Package | Go source files compiled together under one package name. |
 | Permission mask | A process setting that can remove permissions from newly created files or directories. |
+| Pinned hash | An expected content hash saved separately from the file being checked. |
 | POSIX shell | A command interpreter that supports the shell syntax used in the examples. |
 | Relative path | A path interpreted from the current directory. |
 | Repository | The project's version-controlled source files and history. |

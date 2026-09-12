@@ -1,0 +1,56 @@
+{
+  "contract_version": 1,
+  "kind": "job",
+  "execution_id": "stopped-baseline",
+  "job_id": "record-baseline",
+  "job_kind": "run",
+  "priority": 1,
+  "inputs": {
+    "scenario": {
+      "type": "lane",
+      "start_position_mm": 0,
+      "start_speed_mm_s": 10000,
+      "goal_position_mm": 60000,
+      "vehicle_length_mm": 4000,
+      "obstacles": [
+        {
+          "position_mm": 25000,
+          "speed_mm_s": 0,
+          "length_mm": 4000
+        }
+      ]
+    },
+    "controller": {
+      "name": "baseline",
+      "version": 1
+    },
+    "simulator": {
+      "name": "lane",
+      "version": 1
+    },
+    "run_template": {
+      "tick_ms": 100
+    },
+    "analysis_template": {
+      "collision_count": {
+        "version": 1,
+        "maximum": 0
+      },
+      "minimum_obstacle_gap": {
+        "version": 1,
+        "minimum_mm": 0
+      },
+      "goal_progress": {
+        "version": 1,
+        "minimum_ppm": 1000000
+      }
+    },
+    "seed": 0,
+    "repeat": 0,
+    "limits": {
+      "max_ticks": 100,
+      "timeout_ms": 1000
+    }
+  },
+  "inputs_hash": "d36df65df810c3049ec0d5b623b693f91f123e5690c3bb5f6959604f9535d580"
+}

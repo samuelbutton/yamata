@@ -1,9 +1,7 @@
 package contract
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -101,7 +99,9 @@ func (s *inspection) load(ctx context.Context, path, kind string) (checkedFile, 
 	}
 	var d document
 	if strings.HasSuffix(path, ".jsonl") {
-		d, err = s.bag(ctx, data)
+		var bag Bag
+		bag, err = s.validator.ParseBag(ctx, data)
+		d = document{Kind: bag.Header.Kind, ExecutionID: bag.Header.ExecutionID, InputsHash: bag.Header.InputsHash, TickMS: bag.Header.TickMS, RecordCount: bag.Header.RecordCount}
 	} else {
 		d, err = s.validator.parse(data)
 		if err == nil && (d.Kind == "bag" || d.Kind == "tick") {
@@ -147,38 +147,4 @@ func (s *inspection) reference(ctx context.Context, r *reference, kind string) (
 		return document{}, ErrHash
 	}
 	return file.document, nil
-}
-
-func (s *inspection) bag(ctx context.Context, data []byte) (document, error) {
-	if !bytes.HasSuffix(data, []byte("\n")) {
-		return document{}, fmt.Errorf("%w: bag must end with a newline", ErrInvalid)
-	}
-	lines := bytes.SplitN(data[:len(data)-1], []byte("\n"), 100003)
-	d, err := s.validator.parse(lines[0])
-	if err != nil {
-		return d, err
-	}
-	if d.Kind != "bag" || len(lines)-1 != d.RecordCount {
-		return d, fmt.Errorf("%w: bag record count", ErrInvalid)
-	}
-	for i, line := range lines[1:] {
-		if err := ctx.Err(); err != nil {
-			return d, err
-		}
-		record, err := s.validator.parse(line)
-		if err != nil {
-			return d, err
-		}
-		var tick struct {
-			Tick   int `json:"tick"`
-			TimeMS int `json:"time_ms"`
-		}
-		if err := json.Unmarshal(line, &tick); err != nil {
-			return d, err
-		}
-		if record.Kind != "tick" || tick.Tick != i || tick.TimeMS != i*d.TickMS {
-			return d, fmt.Errorf("%w: unordered bag ticks", ErrInvalid)
-		}
-	}
-	return d, nil
 }
