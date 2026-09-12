@@ -2,14 +2,15 @@
 
 Yamata is a teaching project for local simulation execution and analysis.
 The first example prepares a data directory through a command-line interface (CLI).
+The exchange validator checks versioned files and their references without changing them.
 Simulation, recordings, scoring, and workers belong to later changes.
 
 ## Run the first example
 
-Prerequisites: Go 1.25, GNU Make 3.81 or later, and a POSIX shell on macOS or Linux.
+Prerequisites: Go 1.25.13, GNU Make 3.81 or later, and a POSIX shell on macOS or Linux.
 Use an ordinary user account with write access to the checkout.
-The module uses only the Go standard library.
-Builds, tests, and commands need no network connection after you install the tools.
+Install the pinned Go dependencies with `go mod download` from the repository root.
+Builds, tests, and commands need no network connection after you install the tools and dependencies.
 
 From the repository root, run:
 
@@ -84,6 +85,9 @@ An administrator account can bypass permission checks. Do not use one for this e
 | --- | --- |
 | [cmd/yamata/main.go](cmd/yamata/main.go) | Parses commands, selects the data directory, and reports errors. |
 | [internal/datadir/dir.go](internal/datadir/dir.go) | Creates the directory and checks file access. |
+| [contract/v1/](contract/v1/) | Publishes schemas, compatibility examples, and file hashes. |
+| [internal/contract/](internal/contract/) | Validates file shapes, identities, references, and hashes. |
+| [cmd/yamata/validate.go](cmd/yamata/validate.go) | Exposes the read-only exchange validator. |
 | [cmd/yamata/main_test.go](cmd/yamata/main_test.go) | Checks command behavior, defaults, errors, and help without writes. |
 | [internal/datadir/dir_test.go](internal/datadir/dir_test.go) | Checks file preservation, cleanup, invalid paths, and permission failures. |
 
@@ -92,4 +96,5 @@ The storage package reads no environment variables and writes no console output.
 There are no background processes or external services.
 
 Read the [contribution guide](CONTRIBUTING.md), [glossary](docs/glossary.md), and [writing rules](docs/writing.md) before changing the project.
+Follow the [exchange contract walkthrough](docs/contract.md) to trace a job through its event and result.
 The project uses the [Apache License 2.0](LICENSE).

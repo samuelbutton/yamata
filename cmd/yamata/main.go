@@ -14,13 +14,15 @@ const help = `Yamata: local simulation tools.
 
 Usage:
   yamata init [--data-dir PATH]
+  yamata validate --exchange-dir PATH FILE [FILE ...]
   yamata help
 
 Commands:
   init  Create and check the data directory.
+  validate  Check exchange files and their references.
   help  Show this help.
 
-Run yamata init --help for options.
+Run yamata COMMAND --help for options.
 `
 
 const initHelp = `Usage: yamata init [--data-dir PATH]
@@ -53,6 +55,8 @@ func run(args []string, output io.Writer) error {
 		return writeHelp(output, help)
 	case "init":
 		return initialize(args[1:], output)
+	case "validate":
+		return validate(args[1:], output)
 	default:
 		return fmt.Errorf("unknown command %q; run yamata help", args[0])
 	}

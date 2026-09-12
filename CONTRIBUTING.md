@@ -43,6 +43,9 @@ This command removes the built binary.
 It preserves source files and data directories.
 
 Run the README examples when you change command behavior.
+Run the [contract walkthrough](docs/contract.md#validate-the-example) when you change the exchange boundary.
+After an intentional contract-file change, run `make generate` and review the updated file hashes and embedded schema.
+Then run `make check`. The tests reject stale generated files and invalid compatibility examples.
 In the review description, explain the behavior, its limits, and the checks you ran.
 Record the tested operating system and tool versions in that description.
 

@@ -1,0 +1,19 @@
+{
+  "contract_version": 1,
+  "kind": "event",
+  "execution_id": "exec-1",
+  "job_id": "run-1",
+  "attempt_id": "analysis-1",
+  "correlation_id": "example-1",
+  "event_id": "97c39a1b92291dbf546b634a06983c2b3e6b16e40743a1de299292ba1dcf4ea3",
+  "sequence": 3,
+  "state": "FAIL",
+  "analysis_id": "b1ad85fc0a003930e54b8c58c0cc1247f6b6f4df1a1ecb6cb74f2cda25f7285f",
+  "result": {
+    "path": "results/run-1.json",
+    "sha256": "34a012708705d9bd55038e19d1329cc982f1cc51b03bfaa19eeca8f6c92188f9"
+  },
+  "event_type": "execution_transition",
+  "producer": "yamata",
+  "created_at_ms": 0
+}

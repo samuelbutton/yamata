@@ -1,6 +1,6 @@
 GO ?= go
 
-.PHONY: build test vet fmt check clean
+.PHONY: build test vet fmt generate check clean
 
 build:
 	$(GO) build -trimpath -o bin/yamata ./cmd/yamata
@@ -13,6 +13,9 @@ vet:
 
 fmt:
 	$(GO) fmt ./...
+
+generate:
+	$(GO) generate ./internal/contract
 
 check:
 	@test -z "$$(gofmt -l cmd internal)" || { gofmt -l cmd internal; exit 1; }

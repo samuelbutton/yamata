@@ -1,0 +1,54 @@
+[
+  {
+    "file": "unknown-version.json",
+    "error": "version"
+  },
+  {
+    "file": "changed-input-hash.json",
+    "error": "hash"
+  },
+  {
+    "file": "malformed-hash.json",
+    "error": "invalid"
+  },
+  {
+    "file": "parent-path.json",
+    "error": "invalid"
+  },
+  {
+    "file": "absolute-path.json",
+    "error": "invalid"
+  },
+  {
+    "file": "changed-bag-hash.json",
+    "error": "hash"
+  },
+  {
+    "file": "executable-input.json",
+    "error": "invalid"
+  },
+  {
+    "file": "false-pass.json",
+    "error": "invalid"
+  },
+  {
+    "file": "unavailable-pass.json",
+    "error": "invalid"
+  },
+  {
+    "file": "wrong-analysis-id.json",
+    "error": "hash"
+  },
+  {
+    "file": "outside-evidence.json",
+    "error": "invalid"
+  },
+  {
+    "file": "duplicate-key.json",
+    "error": "invalid"
+  },
+  {
+    "file": "truncated.jsonl",
+    "error": "invalid"
+  }
+]

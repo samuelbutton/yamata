@@ -1,0 +1,774 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yamata.invalid/contract/v1/exchange.schema.json",
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "reference": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^(jobs|events|results|bags)/[a-z0-9][a-z0-9_-]{0,127}\\.(json|jsonl)$"
+        },
+        "sha256": {
+          "$ref": "#/$defs/hash"
+        }
+      },
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "additionalProperties": false
+    },
+    "obstacle": {
+      "type": "object",
+      "properties": {
+        "position_mm": {
+          "type": "integer",
+          "minimum": -1000000000,
+          "maximum": 1000000000
+        },
+        "speed_mm_s": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        "length_mm": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000
+        }
+      },
+      "required": [
+        "position_mm",
+        "speed_mm_s",
+        "length_mm"
+      ],
+      "additionalProperties": false
+    },
+    "scenario": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "lane"
+        },
+        "start_position_mm": {
+          "type": "integer",
+          "minimum": -1000000000,
+          "maximum": 1000000000
+        },
+        "start_speed_mm_s": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        "goal_position_mm": {
+          "type": "integer",
+          "minimum": -1000000000,
+          "maximum": 1000000000
+        },
+        "vehicle_length_mm": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000
+        },
+        "obstacles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/obstacle"
+          },
+          "maxItems": 32
+        }
+      },
+      "required": [
+        "type",
+        "start_position_mm",
+        "start_speed_mm_s",
+        "goal_position_mm",
+        "vehicle_length_mm",
+        "obstacles"
+      ],
+      "additionalProperties": false
+    },
+    "analysis_template": {
+      "type": "object",
+      "properties": {
+        "collision_count": {
+          "type": "object",
+          "properties": {
+            "version": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            },
+            "maximum": {
+              "const": 0
+            }
+          },
+          "required": [
+            "version",
+            "maximum"
+          ],
+          "additionalProperties": false
+        },
+        "minimum_obstacle_gap": {
+          "type": "object",
+          "properties": {
+            "version": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            },
+            "minimum_mm": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000000
+            }
+          },
+          "required": [
+            "version",
+            "minimum_mm"
+          ],
+          "additionalProperties": false
+        },
+        "goal_progress": {
+          "type": "object",
+          "properties": {
+            "version": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            },
+            "minimum_ppm": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000
+            }
+          },
+          "required": [
+            "version",
+            "minimum_ppm"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "collision_count",
+        "minimum_obstacle_gap",
+        "goal_progress"
+      ],
+      "additionalProperties": false
+    },
+    "run_inputs": {
+      "type": "object",
+      "properties": {
+        "scenario": {
+          "$ref": "#/$defs/scenario"
+        },
+        "controller": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "enum": [
+                "baseline",
+                "candidate"
+              ]
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            }
+          },
+          "required": [
+            "name",
+            "version"
+          ],
+          "additionalProperties": false
+        },
+        "simulator": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "const": "lane"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            }
+          },
+          "required": [
+            "name",
+            "version"
+          ],
+          "additionalProperties": false
+        },
+        "run_template": {
+          "type": "object",
+          "properties": {
+            "tick_ms": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            }
+          },
+          "required": [
+            "tick_ms"
+          ],
+          "additionalProperties": false
+        },
+        "analysis_template": {
+          "$ref": "#/$defs/analysis_template"
+        },
+        "seed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "repeat": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "limits": {
+          "type": "object",
+          "properties": {
+            "max_ticks": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100000
+            },
+            "timeout_ms": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 600000
+            }
+          },
+          "required": [
+            "max_ticks",
+            "timeout_ms"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "scenario",
+        "controller",
+        "simulator",
+        "run_template",
+        "analysis_template",
+        "seed",
+        "repeat",
+        "limits"
+      ],
+      "additionalProperties": false
+    },
+    "analysis_inputs": {
+      "type": "object",
+      "properties": {
+        "bag": {
+          "$ref": "#/$defs/reference"
+        },
+        "analysis_template": {
+          "$ref": "#/$defs/analysis_template"
+        }
+      },
+      "required": [
+        "bag",
+        "analysis_template"
+      ],
+      "additionalProperties": false
+    },
+    "job": {
+      "type": "object",
+      "properties": {
+        "contract_version": {
+          "const": 1
+        },
+        "kind": {
+          "const": "job"
+        },
+        "execution_id": {
+          "$ref": "#/$defs/id"
+        },
+        "job_id": {
+          "$ref": "#/$defs/id"
+        },
+        "job_kind": {
+          "enum": [
+            "run",
+            "analysis"
+          ]
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "correlation_id": {
+          "$ref": "#/$defs/id"
+        },
+        "inputs": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/run_inputs"
+            },
+            {
+              "$ref": "#/$defs/analysis_inputs"
+            }
+          ]
+        },
+        "inputs_hash": {
+          "$ref": "#/$defs/hash"
+        }
+      },
+      "required": [
+        "contract_version",
+        "kind",
+        "execution_id",
+        "job_id",
+        "job_kind",
+        "priority",
+        "inputs",
+        "inputs_hash"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "job_kind": {
+                "const": "run"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "inputs": {
+                "$ref": "#/$defs/run_inputs"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "inputs": {
+                "$ref": "#/$defs/analysis_inputs"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "metric": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          ]
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "unit": {
+          "enum": [
+            "count",
+            "mm",
+            "ppm"
+          ]
+        },
+        "pass": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "boolean"
+            }
+          ]
+        },
+        "evidence_ticks": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "maxItems": 100000
+        }
+      },
+      "required": [
+        "value",
+        "version",
+        "unit",
+        "pass",
+        "evidence_ticks"
+      ],
+      "additionalProperties": false
+    },
+    "result": {
+      "type": "object",
+      "properties": {
+        "contract_version": {
+          "const": 1
+        },
+        "kind": {
+          "const": "result"
+        },
+        "execution_id": {
+          "$ref": "#/$defs/id"
+        },
+        "job_id": {
+          "$ref": "#/$defs/id"
+        },
+        "attempt_id": {
+          "$ref": "#/$defs/id"
+        },
+        "correlation_id": {
+          "$ref": "#/$defs/id"
+        },
+        "job": {
+          "$ref": "#/$defs/reference"
+        },
+        "inputs_hash": {
+          "$ref": "#/$defs/hash"
+        },
+        "bag": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/reference"
+            }
+          ]
+        },
+        "analysis_id": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/hash"
+            }
+          ]
+        },
+        "analysis_template": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/analysis_template"
+            }
+          ]
+        },
+        "analysis_hash": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/hash"
+            }
+          ]
+        },
+        "status": {
+          "enum": [
+            "PASS",
+            "FAIL",
+            "WARN",
+            "ERROR"
+          ]
+        },
+        "failure_class": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "enum": [
+                "controller_failure",
+                "simulation_timeout",
+                "worker_failure",
+                "analysis_failure"
+              ]
+            }
+          ]
+        },
+        "timing": {
+          "type": "object",
+          "properties": {
+            "duration_ms": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "duration_ms"
+          ],
+          "additionalProperties": false
+        },
+        "metrics": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "collision_count": {
+                  "$ref": "#/$defs/metric"
+                },
+                "minimum_obstacle_gap": {
+                  "$ref": "#/$defs/metric"
+                },
+                "goal_progress": {
+                  "$ref": "#/$defs/metric"
+                }
+              },
+              "required": [
+                "collision_count",
+                "minimum_obstacle_gap",
+                "goal_progress"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "required": [
+        "contract_version",
+        "kind",
+        "execution_id",
+        "job_id",
+        "attempt_id",
+        "job",
+        "inputs_hash",
+        "bag",
+        "analysis_id",
+        "analysis_template",
+        "analysis_hash",
+        "status",
+        "failure_class",
+        "timing",
+        "metrics"
+      ],
+      "additionalProperties": false
+    },
+    "event": {
+      "type": "object",
+      "properties": {
+        "contract_version": {
+          "const": 1
+        },
+        "kind": {
+          "const": "event"
+        },
+        "execution_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_id": {
+          "$ref": "#/$defs/hash"
+        },
+        "job_id": {
+          "$ref": "#/$defs/id"
+        },
+        "attempt_id": {
+          "$ref": "#/$defs/id"
+        },
+        "correlation_id": {
+          "$ref": "#/$defs/id"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "enum": [
+            "PENDING",
+            "RUNNING",
+            "ANALYZING",
+            "PASS",
+            "FAIL",
+            "WARN",
+            "ERROR"
+          ]
+        },
+        "analysis_id": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/hash"
+            }
+          ]
+        },
+        "result": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/reference"
+            }
+          ]
+        },
+        "event_type": {
+          "const": "execution_transition"
+        },
+        "producer": {
+          "const": "yamata"
+        },
+        "created_at_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "contract_version",
+        "kind",
+        "execution_id",
+        "event_id",
+        "job_id",
+        "attempt_id",
+        "sequence",
+        "state",
+        "analysis_id",
+        "result",
+        "event_type",
+        "producer",
+        "created_at_ms"
+      ],
+      "additionalProperties": false
+    },
+    "bag": {
+      "type": "object",
+      "properties": {
+        "contract_version": {
+          "const": 1
+        },
+        "kind": {
+          "const": "bag"
+        },
+        "execution_id": {
+          "$ref": "#/$defs/id"
+        },
+        "format_version": {
+          "const": 1
+        },
+        "inputs_hash": {
+          "$ref": "#/$defs/hash"
+        },
+        "tick_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "record_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100001
+        }
+      },
+      "required": [
+        "contract_version",
+        "kind",
+        "execution_id",
+        "format_version",
+        "inputs_hash",
+        "tick_ms",
+        "record_count"
+      ],
+      "additionalProperties": false
+    },
+    "tick": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "tick"
+        },
+        "tick": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "time_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000000
+        },
+        "position_mm": {
+          "type": "integer",
+          "minimum": -1000000000000,
+          "maximum": 1000000000000
+        },
+        "speed_mm_s": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        },
+        "acceleration_mm_s2": {
+          "type": "integer",
+          "minimum": -1000000000,
+          "maximum": 1000000000
+        },
+        "obstacles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/obstacle"
+          },
+          "maxItems": 32
+        }
+      },
+      "required": [
+        "kind",
+        "tick",
+        "time_ms",
+        "position_mm",
+        "speed_mm_s",
+        "acceleration_mm_s2",
+        "obstacles"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/job"
+    },
+    {
+      "$ref": "#/$defs/result"
+    },
+    {
+      "$ref": "#/$defs/event"
+    },
+    {
+      "$ref": "#/$defs/bag"
+    },
+    {
+      "$ref": "#/$defs/tick"
+    }
+  ]
+}

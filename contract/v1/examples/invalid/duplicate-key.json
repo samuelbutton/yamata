@@ -1,0 +1,57 @@
+{
+  "contract_version": 1,
+  "kind": "job",
+  "execution_id": "exec-1",
+  "job_id": "run-1",
+  "job_kind": "run",
+  "priority": 0, "priority": 1,
+  "correlation_id": "example-1",
+  "inputs": {
+    "scenario": {
+      "type": "lane",
+      "start_position_mm": 0,
+      "start_speed_mm_s": 1000,
+      "goal_position_mm": 2000,
+      "vehicle_length_mm": 1000,
+      "obstacles": [
+        {
+          "position_mm": 2000,
+          "speed_mm_s": 0,
+          "length_mm": 500
+        }
+      ]
+    },
+    "controller": {
+      "name": "candidate",
+      "version": 1
+    },
+    "simulator": {
+      "name": "lane",
+      "version": 1
+    },
+    "run_template": {
+      "tick_ms": 1000
+    },
+    "analysis_template": {
+      "collision_count": {
+        "version": 1,
+        "maximum": 0
+      },
+      "minimum_obstacle_gap": {
+        "version": 1,
+        "minimum_mm": 0
+      },
+      "goal_progress": {
+        "version": 1,
+        "minimum_ppm": 1000000
+      }
+    },
+    "seed": 0,
+    "repeat": 0,
+    "limits": {
+      "max_ticks": 2,
+      "timeout_ms": 1000
+    }
+  },
+  "inputs_hash": "648cce0ff71c92754f04495fbec40ea0ef6ab8294565fdefce04e6d1ab8b5690"
+}
