@@ -77,7 +77,7 @@ func verify(t *testing.T, dir string, out Outcome) contract.Result {
 	if err := json.Unmarshal(read(t, filepath.Join(dir, out.Event.Path)), &e); err != nil {
 		t.Fatal(err)
 	}
-	if e.Result != out.Result || e.State != r.Status || e.CreatedAtMS <= 0 || r.Timing.DurationMS < 0 {
+	if e.Result == nil || *e.Result != out.Result || e.State != r.Status || e.CreatedAtMS <= 0 || r.Timing.DurationMS < 0 {
 		t.Fatal("result/event relationship differs")
 	}
 	return r

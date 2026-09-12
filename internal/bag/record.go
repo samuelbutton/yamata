@@ -41,27 +41,11 @@ func Record(ctx context.Context, directory, jobPath string) (result Publication,
 	if err != nil {
 		return result, err
 	}
-	config, err := configuration(job.Inputs)
+	data, err := Prepare(ctx, v, job)
 	if err != nil {
 		return result, err
 	}
-	runCtx, cancel := context.WithTimeout(ctx, time.Duration(job.Inputs.Limits.TimeoutMS)*time.Millisecond)
-	trace, err := simulator.Run(runCtx, config)
-	cancel()
-	if err != nil {
-		return result, fmt.Errorf("simulate job: %w", err)
-	}
-	data, err := encode(ctx, job, trace)
-	if err != nil {
-		return result, err
-	}
-	checked, err := v.ParseBag(ctx, data)
-	if err != nil {
-		return result, fmt.Errorf("validate recording: %w", err)
-	}
-	if err := ctx.Err(); err != nil {
-		return result, err
-	}
+	digest := contract.Hash(data)
 	if err := root.Mkdir("bags", 0o700); err != nil && !errors.Is(err, os.ErrExist) {
 		return result, fmt.Errorf("create bags directory: %w", err)
 	}
@@ -75,13 +59,40 @@ func Record(ctx context.Context, directory, jobPath string) (result Publication,
 	}
 	defer func() { err = errors.Join(err, dir.Close()) }()
 	name := job.ExecutionID + ".jsonl"
-	if err := publish(ctx, dir, name, checked.SHA256, v, func(w io.Writer) error {
+	if err := publish(ctx, dir, name, digest, v, func(w io.Writer) error {
 		_, err := io.Copy(w, bytes.NewReader(data))
 		return err
 	}); err != nil {
 		return result, err
 	}
-	return Publication{Path: "bags/" + name, SHA256: checked.SHA256}, nil
+	return Publication{Path: "bags/" + name, SHA256: digest}, nil
+}
+
+// Prepare simulates a validated snapshot and returns complete, checked bag bytes.
+// It does not publish files; a queue can fence acceptance with its current lease.
+func Prepare(ctx context.Context, v *contract.Validator, job contract.RunJob) ([]byte, error) {
+	config, err := configuration(job.Inputs)
+	if err != nil {
+		return nil, err
+	}
+	runCtx, cancel := context.WithTimeout(ctx, time.Duration(job.Inputs.Limits.TimeoutMS)*time.Millisecond)
+	trace, err := simulator.Run(runCtx, config)
+	cancel()
+	if err != nil {
+		return nil, fmt.Errorf("simulate job: %w", err)
+	}
+	data, err := encode(ctx, job, trace)
+	if err != nil {
+		return nil, err
+	}
+	_, err = v.ParseBag(ctx, data)
+	if err != nil {
+		return nil, fmt.Errorf("validate recording: %w", err)
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	return data, nil
 }
 
 func configuration(in contract.RunInputs) (simulator.Config, error) {

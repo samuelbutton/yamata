@@ -62,6 +62,14 @@ func (v *Validator) ReadRunJob(ctx context.Context, root *os.Root, path string) 
 	if err != nil {
 		return RunJob{}, err
 	}
+	return v.ParseRunJob(ctx, data)
+}
+
+// ParseRunJob validates a saved run-job snapshot without reading a mutable path.
+func (v *Validator) ParseRunJob(ctx context.Context, data []byte) (RunJob, error) {
+	if err := ctx.Err(); err != nil {
+		return RunJob{}, err
+	}
 	d, err := v.parse(data)
 	if err != nil {
 		return RunJob{}, err

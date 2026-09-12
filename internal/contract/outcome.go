@@ -30,22 +30,22 @@ type Result struct {
 	Metrics map[string]Metric `json:"metrics"`
 }
 
-// Event announces an outcome only after its referenced result is published.
+// Event records an execution transition. Terminal events reference a published result.
 type Event struct {
-	ContractVersion int       `json:"contract_version"`
-	Kind            string    `json:"kind"`
-	ExecutionID     string    `json:"execution_id"`
-	JobID           string    `json:"job_id"`
-	AttemptID       string    `json:"attempt_id"`
-	CorrelationID   string    `json:"correlation_id,omitempty"`
-	EventID         string    `json:"event_id"`
-	Sequence        int64     `json:"sequence"`
-	State           string    `json:"state"`
-	AnalysisID      *string   `json:"analysis_id"`
-	Result          Reference `json:"result"`
-	EventType       string    `json:"event_type"`
-	Producer        string    `json:"producer"`
-	CreatedAtMS     int64     `json:"created_at_ms"`
+	ContractVersion int        `json:"contract_version"`
+	Kind            string     `json:"kind"`
+	ExecutionID     string     `json:"execution_id"`
+	JobID           string     `json:"job_id"`
+	AttemptID       string     `json:"attempt_id"`
+	CorrelationID   string     `json:"correlation_id,omitempty"`
+	EventID         string     `json:"event_id"`
+	Sequence        int64      `json:"sequence"`
+	State           string     `json:"state"`
+	AnalysisID      *string    `json:"analysis_id"`
+	Result          *Reference `json:"result"`
+	EventType       string     `json:"event_type"`
+	Producer        string     `json:"producer"`
+	CreatedAtMS     int64      `json:"created_at_ms"`
 }
 
 // Hash returns the lowercase SHA-256 hash of exact bytes.

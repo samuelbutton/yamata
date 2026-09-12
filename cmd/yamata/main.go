@@ -18,6 +18,8 @@ Usage:
   yamata simulate [--scenario NAME] [--controller NAME]
   yamata record --exchange-dir PATH JOB
   yamata run --exchange-dir PATH JOB
+  yamata enqueue --exchange-dir PATH JOB
+  yamata workers --exchange-dir PATH [OPTIONS]
   yamata inspect --exchange-dir PATH --sha256 HASH BAG
   yamata help
 
@@ -27,6 +29,8 @@ Commands:
   simulate  Run a built-in simulation in memory.
   record  Run a resolved job and save an immutable bag.
   run  Record, score, and publish a standalone job outcome.
+  enqueue  Commit a job to the durable queue.
+  workers  Run simulation and analysis worker pools.
   inspect  Check a saved bag and print its motion summary.
   help  Show this help.
 
@@ -71,6 +75,10 @@ func run(args []string, output io.Writer) error {
 		return record(args[1:], output)
 	case "run":
 		return execute(args[1:], output)
+	case "enqueue":
+		return enqueue(args[1:], output)
+	case "workers":
+		return workers(args[1:], output)
 	case "inspect":
 		return inspect(args[1:], output)
 	default:

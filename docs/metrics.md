@@ -200,4 +200,5 @@ Repeating the same job validates the accepted result and repairs the missing eve
 
 Standalone completion emits one terminal event with sequence one for its accepted attempt.
 It does not emit queue transitions or run background workers.
-Durable queues, outbox recovery, and automatic retry policies belong to later changes.
+The [worker guide](workers.md) explains durable queues and outbox recovery.
+Use a separate exchange for queued execution. Explicit worker-failure retry policies belong to a later change.

@@ -8,7 +8,7 @@ Add necessary technical terms when a change introduces them.
 | Absolute path | A path that starts at the filesystem root. |
 | Analysis | One scoring operation on a saved bag with a complete metric configuration. |
 | Analysis ID | A hash identifying an execution, bag, and complete analysis configuration. |
-| Attempt | One worker attempt to complete a job. |
+| Attempt | One identified attempt to complete a job; recovery can replace stage leases within the same attempt. |
 | Bag | A JSON Lines file with a header and ordered simulation records. |
 | Binary | The executable program produced by the Go build command. |
 | Checkout | A local copy of the repository files. |
@@ -32,19 +32,25 @@ Add necessary technical terms when a change introduces them.
 | JSON | JavaScript Object Notation, the structured format used by exchange documents. |
 | JSON Lines | A format with one complete JSON value per line. |
 | JSON Schema | A standard for defining and validating the structure of JSON values. |
+| Lease | Temporary stage ownership identified by a token and an expiration time. |
 | Metric | A named, versioned calculation on a bag. |
 | Module | A group of Go packages with a module path and a declared Go version. |
+| Outbox | Durable records of exact files awaiting publication and acknowledgment. |
 | Package | Go source files compiled together under one package name. |
 | Permission mask | A process setting that can remove permissions from newly created files or directories. |
 | Pinned hash | An expected content hash saved separately from the file being checked. |
 | POSIX shell | A command interpreter that supports the shell syntax used in the examples. |
 | Parts per million | Integer millionths of a quantity; 1,000,000 represents the complete quantity. |
+| Queue | Durable jobs waiting for a worker stage. |
+| Receipt | Confirmation that a complete job was committed to the queue. |
 | Relative path | A path interpreted from the current directory. |
 | Repository | The project's version-controlled source files and history. |
 | Result | Authoritative scores or an explicit terminal failure for a job. |
 | SHA-256 | The cryptographic hash function used for file and configuration identity. |
 | Scenario | The initial vehicle state, goal, and obstacle behavior. |
 | Semi-implicit Euler | A step method that updates speed before it uses that speed to update position. |
+| SQLite | The embedded database used for local queue state and accepted output bytes. |
+| Stage | The simulation or analysis portion of a queued job. |
 | Standard error | The output stream used for error messages. |
 | Standard library | Packages supplied with the Go toolchain. |
 | Standard output | The output stream used for command results and help. |
@@ -56,5 +62,8 @@ Add necessary technical terms when a change introduces them.
 | Temporary file | A file created for a short operation and removed afterward. |
 | Tick | One fixed step of simulation time. |
 | Trace | The simulator's in-memory sequence of records and its reason for stopping. |
+| Transaction | Database changes committed together or rolled back together. |
+| Write-ahead log | SQLite files that preserve committed changes before they reach the main database file. |
+| Worker pool | A bounded group of concurrent workers assigned to one stage. |
 | Unix milliseconds | Milliseconds since 1970-01-01 at 00:00:00 UTC. |
 | Toolchain | Programs that compile, test, and inspect source code. |

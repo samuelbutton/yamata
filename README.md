@@ -6,7 +6,8 @@ The exchange validator checks versioned files and their references without chang
 The simulator runs three built-in scenarios with two braking controllers.
 The recorder saves immutable bags, and the inspector checks their content hashes and recorded motion.
 Standalone jobs calculate versioned metrics and publish immutable results and completion events.
-Queues and background workers belong to later changes.
+SQLite queues retain complete jobs and accepted outputs across worker restarts.
+Separate simulation and analysis pools process queued jobs.
 
 ## Run the first example
 
@@ -71,6 +72,8 @@ To save a simulation, follow the [bag walkthrough](docs/bags.md#save-and-inspect
 It uses complete job files from [examples/jobs](examples/jobs/) and keeps generated bags in a temporary exchange directory.
 To record and score a job, follow the [metrics walkthrough](docs/metrics.md#run-and-score-a-job).
 The `run` command returns exit code `0` only for a `PASS` outcome.
+To import jobs and run durable worker pools, follow the [worker walkthrough](docs/workers.md#import-and-process-a-job).
+Use separate exchange directories for standalone and queued execution.
 
 Use `yamata init --data-dir PATH` to select a different directory.
 Relative paths start at the current directory, regardless of the binary location.
@@ -130,12 +133,18 @@ An administrator account can bypass permission checks. Do not use one for this e
 | [internal/standalone/run.go](internal/standalone/run.go) | Publishes standalone results before completion events. |
 | [internal/publication/publication.go](internal/publication/publication.go) | Stages, validates, and synchronizes immutable files. |
 | [cmd/yamata/execute.go](cmd/yamata/execute.go) | Runs one job and reports its authoritative outcome. |
+| [internal/queue/](internal/queue/) | Owns SQLite intake, stage leases, accepted outputs, and ordered outbox delivery. |
+| [internal/execution/](internal/execution/) | Shares analysis identity, scoring outcomes, and run failure classification. |
+| [internal/ownership/](internal/ownership/) | Reserves one execution mode per exchange. |
+| [internal/filelock/](internal/filelock/) | Coordinates local processes with persistent file locks. |
+| [cmd/yamata/workers.go](cmd/yamata/workers.go) | Imports jobs and configures separate worker pools. |
 | [cmd/yamata/main_test.go](cmd/yamata/main_test.go) | Checks command behavior, defaults, errors, and help without writes. |
 | [internal/datadir/dir_test.go](internal/datadir/dir_test.go) | Checks file preservation, cleanup, invalid paths, and permission failures. |
 
 Command parsing passes an explicit path to the storage package.
 The storage package reads no environment variables and writes no console output.
-There are no background processes or external services.
+Workers run in the foreground until interrupted or drained.
+There are no external services or installed background schedules.
 
 Read the [contribution guide](CONTRIBUTING.md), [glossary](docs/glossary.md), and [writing rules](docs/writing.md) before changing the project.
 Follow the [exchange contract walkthrough](docs/contract.md) to trace a job through its event and result.
