@@ -207,7 +207,7 @@ func TestExpiredLeaseCannotAcceptOrRenew(t *testing.T) {
 				t.Fatal(err)
 			}
 			called := false
-			err = s.accept(t.Context(), old, "done", "", func(*sql.Tx, int64) error { called = true; return nil })
+			err = s.accept(t.Context(), old, func(*sql.Tx, int64) error { called = true; return nil })
 			if !errors.Is(err, ErrLease) || called {
 				t.Fatalf("stale acceptance: %v", err)
 			}
@@ -458,7 +458,7 @@ func TestPrivateDatabasePathsAndVersion(t *testing.T) {
 	if mode != "wal" {
 		t.Fatal(mode)
 	}
-	_, err := s.db.Exec("PRAGMA user_version=2")
+	_, err := s.db.Exec("PRAGMA user_version=99")
 	must(t, err)
 	if other, err := Open(t.Context(), dir); err == nil {
 		other.Close()

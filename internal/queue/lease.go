@@ -12,7 +12,7 @@ import (
 )
 
 type lease struct {
-	id                                   int64
+	id, generation                       int64
 	job                                  contract.RunJob
 	path, attempt, token, stage, bagHash string
 	started                              int64
@@ -23,9 +23,13 @@ func (s *Store) claim(ctx context.Context, stage string, duration time.Duration)
 		var data []byte
 		var state string
 		now := time.Now().UnixMilli()
-		err := tx.QueryRowContext(ctx, `SELECT id,data,path,attempt,started_ms,bag_hash,state FROM jobs
+		var position int
+		if err := tx.QueryRowContext(ctx, "SELECT position FROM dispatches WHERE stage=?", stage).Scan(&position); err != nil {
+			return err
+		}
+		err := tx.QueryRowContext(ctx, `SELECT id,data,path,attempt,started_ms,bag_hash,state,generation FROM jobs
    WHERE stage=? AND lease_ms<=? AND NOT EXISTS (SELECT 1 FROM outbox WHERE job=jobs.id AND delivered=0)
-   ORDER BY id LIMIT 1`, stage, now).Scan(&l.id, &data, &l.path, &l.attempt, &l.started, &l.bagHash, &state)
+   ORDER BY CASE WHEN ?=9 AND priority=3 THEN -1 ELSE priority END, id LIMIT 1`, stage, now, position).Scan(&l.id, &data, &l.path, &l.attempt, &l.started, &l.bagHash, &state, &l.generation)
 		if err != nil {
 			return err
 		}
@@ -34,10 +38,14 @@ func (s *Store) claim(ctx context.Context, stage string, duration time.Duration)
 			return err
 		}
 		l.token, l.stage = rand.Text(), stage
+		l.generation++
 		if state == "PENDING" {
 			l.started = now
 		}
-		if _, err := tx.ExecContext(ctx, "UPDATE jobs SET token=?,lease_ms=?,started_ms=? WHERE id=?", l.token, now+duration.Milliseconds(), l.started, l.id); err != nil {
+		if _, err := tx.ExecContext(ctx, "UPDATE jobs SET token=?,lease_ms=?,started_ms=?,generation=? WHERE id=?", l.token, now+duration.Milliseconds(), l.started, l.generation, l.id); err != nil {
+			return err
+		}
+		if _, err := tx.ExecContext(ctx, "UPDATE dispatches SET position=? WHERE stage=?", (position+1)%10, stage); err != nil {
 			return err
 		}
 		if state == "PENDING" {
@@ -51,7 +59,7 @@ func (s *Store) claim(ctx context.Context, stage string, duration time.Duration)
 func (s *Store) renew(ctx context.Context, l lease, duration time.Duration) error {
 	return s.transaction(ctx, func(tx *sql.Tx) error {
 		now := time.Now().UnixMilli()
-		result, err := tx.ExecContext(ctx, `UPDATE jobs SET lease_ms=? WHERE id=? AND token=? AND stage=? AND lease_ms>?`, now+duration.Milliseconds(), l.id, l.token, l.stage, now)
+		result, err := tx.ExecContext(ctx, `UPDATE jobs SET lease_ms=? WHERE id=? AND token=? AND stage=? AND generation=? AND lease_ms>?`, now+duration.Milliseconds(), l.id, l.token, l.stage, l.generation, now)
 		if err != nil {
 			return err
 		}
@@ -66,10 +74,10 @@ func (s *Store) renew(ctx context.Context, l lease, duration time.Duration) erro
 	})
 }
 
-func (s *Store) accept(ctx context.Context, l lease, stage, hash string, write func(*sql.Tx, int64) error) error {
+func (s *Store) accept(ctx context.Context, l lease, write func(*sql.Tx, int64) error) error {
 	return s.transaction(ctx, func(tx *sql.Tx) error {
 		now := time.Now().UnixMilli()
-		result, err := tx.ExecContext(ctx, `UPDATE jobs SET stage=?,bag_hash=?,token='',lease_ms=0 WHERE id=? AND token=? AND stage=? AND lease_ms>?`, stage, hash, l.id, l.token, l.stage, now)
+		result, err := tx.ExecContext(ctx, `UPDATE jobs SET token='',lease_ms=0 WHERE id=? AND token=? AND stage=? AND generation=? AND lease_ms>?`, l.id, l.token, l.stage, l.generation, now)
 		if err != nil {
 			return err
 		}
@@ -94,7 +102,10 @@ func (s *Store) acceptBag(ctx context.Context, l lease, data []byte) error {
 	if err != nil {
 		return err
 	}
-	return s.accept(ctx, l, "analysis", ref.SHA256, func(tx *sql.Tx, now int64) error {
+	return s.accept(ctx, l, func(tx *sql.Tx, now int64) error {
+		if _, err := tx.ExecContext(ctx, "UPDATE jobs SET stage='analysis',bag_hash=? WHERE id=?", ref.SHA256, l.id); err != nil {
+			return err
+		}
 		if err := addFile(ctx, tx, l.id, ref.Path, "bag", data); err != nil {
 			return err
 		}
@@ -116,7 +127,16 @@ func (s *Store) acceptResult(ctx context.Context, l lease, result contract.Resul
 		return err
 	}
 	ref := contract.Reference{Path: path, SHA256: contract.Hash(data)}
-	return s.accept(ctx, l, "done", l.bagHash, func(tx *sql.Tx, now int64) error {
+	return s.accept(ctx, l, func(tx *sql.Tx, now int64) error {
+		if result.FailureClass != nil && *result.FailureClass == "worker_failure" {
+			retried, err := s.retry(ctx, tx, l, result.AnalysisID, now)
+			if err != nil || retried {
+				return err
+			}
+		}
+		if _, err := tx.ExecContext(ctx, "UPDATE jobs SET stage='done' WHERE id=?", l.id); err != nil {
+			return err
+		}
 		if err := addFile(ctx, tx, l.id, path, "result", data); err != nil {
 			return err
 		}
@@ -128,7 +148,7 @@ func (s *Store) release(l lease) error {
 	// Cleanup has a bounded context independent of the canceled worker.
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	_, err := s.db.ExecContext(ctx, "UPDATE jobs SET token='',lease_ms=0 WHERE id=? AND token=? AND stage=?", l.id, l.token, l.stage)
+	_, err := s.db.ExecContext(ctx, "UPDATE jobs SET token='',lease_ms=0 WHERE id=? AND token=? AND stage=? AND generation=?", l.id, l.token, l.stage, l.generation)
 	return err
 }
 

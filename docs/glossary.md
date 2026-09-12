@@ -24,6 +24,7 @@ Add necessary technical terms when a change introduces them.
 | Exchange directory | The filesystem boundary containing job, event, bag, and result files. |
 | Execution | One identified simulation run. |
 | Exit code | A number that reports command success or failure to the shell. |
+| Generation | An increasing claim number that distinguishes current ownership from stale worker claims. |
 | Go | The programming language and toolchain used to build Yamata. |
 | Hard link | A directory entry that names the same file as another entry. |
 | File lock | Operating-system coordination that prevents cooperating processes from owning the same operation simultaneously. |
@@ -41,12 +42,16 @@ Add necessary technical terms when a change introduces them.
 | Pinned hash | An expected content hash saved separately from the file being checked. |
 | POSIX shell | A command interpreter that supports the shell syntax used in the examples. |
 | Parts per million | Integer millionths of a quantity; 1,000,000 represents the complete quantity. |
+| Priority class | A job field that selects dispatch order among eligible waiting jobs. |
+| Preemption | Interrupting running work to give its capacity to another job. |
 | Queue | Durable jobs waiting for a worker stage. |
 | Receipt | Confirmation that a complete job was committed to the queue. |
 | Relative path | A path interpreted from the current directory. |
 | Repository | The project's version-controlled source files and history. |
 | Result | Authoritative scores or an explicit terminal failure for a job. |
 | SHA-256 | The cryptographic hash function used for file and configuration identity. |
+| Retry | A new attempt after an explicitly reported failure, subject to a durable per-stage allowance. |
+| Reservation | A dispatch slot assigned to the lowest priority class when eligible work is waiting. |
 | Scenario | The initial vehicle state, goal, and obstacle behavior. |
 | Semi-implicit Euler | A step method that updates speed before it uses that speed to update position. |
 | SQLite | The embedded database used for local queue state and accepted output bytes. |

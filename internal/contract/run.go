@@ -10,6 +10,7 @@ import (
 
 // RunJob contains resolved execution inputs, checked against the complete job schema.
 type RunJob struct {
+	Priority      int       `json:"priority"`
 	JobID         string    `json:"job_id"`
 	CorrelationID string    `json:"correlation_id,omitempty"`
 	SHA256        string    `json:"-"`

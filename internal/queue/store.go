@@ -3,7 +3,6 @@ package queue
 
 import (
 	"context"
-	"crypto/rand"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -121,20 +120,7 @@ func Open(ctx context.Context, directory string) (_ *Store, err error) {
 			return nil, errors.New("queue requires SQLite WAL mode")
 		}
 	}
-	err = s.transaction(ctx, func(tx *sql.Tx) error {
-		var version int
-		if err := tx.QueryRowContext(ctx, "PRAGMA user_version").Scan(&version); err != nil {
-			return err
-		}
-		if version != 0 && version != 1 {
-			return fmt.Errorf("unsupported queue database version %d", version)
-		}
-		if version == 1 {
-			return nil
-		}
-		_, err := tx.ExecContext(ctx, schema)
-		return err
-	})
+	err = s.migrate(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -228,9 +214,9 @@ func (s *Store) Import(ctx context.Context, path string) (receipt Receipt, err e
 			receipt.Duplicate = true
 			return nil
 		}
-		attempt := "queue-" + strings.ToLower(rand.Text())
+		attempt := newAttempt()
 		now := time.Now().UnixMilli()
-		inserted, err := tx.ExecContext(ctx, `INSERT INTO jobs(job_id,execution_id,path,data,attempt,stage,state,started_ms) VALUES(?,?,?,?,?,'simulation','PENDING',?)`, job.JobID, job.ExecutionID, path, data, attempt, now)
+		inserted, err := tx.ExecContext(ctx, `INSERT INTO jobs(job_id,execution_id,path,data,attempt,priority,stage,state,started_ms) VALUES(?,?,?,?,?,?,'simulation','PENDING',?)`, job.JobID, job.ExecutionID, path, data, attempt, job.Priority, now)
 		if err != nil {
 			return err
 		}

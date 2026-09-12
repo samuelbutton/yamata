@@ -8,6 +8,7 @@ The recorder saves immutable bags, and the inspector checks their content hashes
 Standalone jobs calculate versioned metrics and publish immutable results and completion events.
 SQLite queues retain complete jobs and accepted outputs across worker restarts.
 Separate simulation and analysis pools process queued jobs.
+Priority classes select waiting work, and worker failures permit one retry per stage.
 
 ## Run the first example
 
@@ -74,6 +75,7 @@ To record and score a job, follow the [metrics walkthrough](docs/metrics.md#run-
 The `run` command returns exit code `0` only for a `PASS` outcome.
 To import jobs and run durable worker pools, follow the [worker walkthrough](docs/workers.md#import-and-process-a-job).
 Use separate exchange directories for standalone and queued execution.
+Read the [recovery guide](docs/recovery.md) for priority order, retry limits, and existing queue upgrades.
 
 Use `yamata init --data-dir PATH` to select a different directory.
 Relative paths start at the current directory, regardless of the binary location.
@@ -134,6 +136,8 @@ An administrator account can bypass permission checks. Do not use one for this e
 | [internal/publication/publication.go](internal/publication/publication.go) | Stages, validates, and synchronizes immutable files. |
 | [cmd/yamata/execute.go](cmd/yamata/execute.go) | Runs one job and reports its authoritative outcome. |
 | [internal/queue/](internal/queue/) | Owns SQLite intake, stage leases, accepted outputs, and ordered outbox delivery. |
+| [internal/queue/migrate.go](internal/queue/migrate.go) | Upgrades saved queue state without changing accepted outputs. |
+| [internal/queue/retry.go](internal/queue/retry.go) | Commits one worker-failure retry per stage with its next attempt event. |
 | [internal/execution/](internal/execution/) | Shares analysis identity, scoring outcomes, and run failure classification. |
 | [internal/ownership/](internal/ownership/) | Reserves one execution mode per exchange. |
 | [internal/filelock/](internal/filelock/) | Coordinates local processes with persistent file locks. |

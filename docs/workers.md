@@ -100,7 +100,8 @@ The pinned [Go driver](https://pkg.go.dev/modernc.org/sqlite) does not require a
 A private `open.lock` serializes database initialization across processes.
 Each queue handle uses one database connection.
 Separate handles and local processes coordinate through SQLite transactions.
-Only the first queue open creates schema version one; an unknown database version is rejected.
+Existing version-one queues upgrade transactionally on open; an unknown database version is rejected.
+Stop older workers before upgrading, as described in the [recovery guide](recovery.md#upgrade-an-existing-queue).
 
 ## Duplicate delivery and immutable output
 
@@ -153,7 +154,8 @@ All queue processes must run on the same host.
 An abrupt process exit leaves its lease until expiration.
 A simulation restart can repeat computation that was never accepted.
 An analysis restart reuses the accepted bag.
-Recovery preserves the durable attempt ID and event sequence.
+Lease recovery preserves the durable attempt ID and event sequence.
+An explicit worker-failure retry receives a new attempt ID.
 Result duration includes elapsed time from the first simulation claim through scoring, including restart and handoff delays.
 
 A crash after database commit leaves pending outbox records.
@@ -163,8 +165,8 @@ Delivered outbox records remain stored for this teaching implementation.
 No automatic retention or disk cleanup runs in the background.
 
 Completed `FAIL`, `WARN`, and `ERROR` outcomes remain terminal on duplicate delivery.
-The current queue processes eligible jobs in intake order within each stage.
-Priority scheduling and bounded retries of explicit worker failures belong to the next change.
+The queue uses priority classes, stable intake order, and a reserved dispatch for the lowest class.
+The [recovery guide](recovery.md) explains scheduling and the single worker-failure retry permitted per stage.
 Interrupted stage recovery does not invent a new passing result.
 
 ## Verify interruption during both stages

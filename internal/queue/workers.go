@@ -151,39 +151,71 @@ func (s *Store) perform(ctx context.Context, l lease, duration time.Duration, be
 			err = errors.Join(err, renewalErr, s.release(l))
 		}
 	}()
+	out, err := s.calculate(stageCtx, l, beforeStage)
+	if stageCtx.Err() != nil {
+		return stageCtx.Err()
+	}
+	if errors.Is(err, errWorkerFailure) {
+		failure := "worker_failure"
+		out.result.Status, out.result.FailureClass = "ERROR", &failure
+	} else if err != nil {
+		return err
+	}
+	if out.bag != nil {
+		return s.acceptBag(stageCtx, l, out.bag)
+	}
+	return s.acceptResult(stageCtx, l, out.result)
+}
+
+var errWorkerFailure = errors.New("worker computation failed")
+
+type stageOutput struct {
+	bag    []byte
+	result contract.Result
+}
+
+// calculate contains worker computations; a panic loses this calculation only.
+// Panic values are deliberately excluded from results and errors.
+func (s *Store) calculate(ctx context.Context, l lease, beforeStage func(context.Context, string) error) (out stageOutput, err error) {
+	out.result = l.result()
+	if l.stage == "analysis" {
+		ref := contract.Reference{Path: "bags/" + l.job.ExecutionID + ".jsonl", SHA256: l.bagHash}
+		out.result, err = execution.Analysis(out.result, l.job, ref)
+		if err != nil {
+			return out, err
+		}
+	}
+	defer func() {
+		if recover() != nil {
+			out.bag = nil
+			err = errWorkerFailure
+		}
+	}()
 	if beforeStage != nil {
-		if err := beforeStage(stageCtx, l.stage); err != nil {
-			return err
+		if err := beforeStage(ctx, l.stage); err != nil {
+			return out, err
 		}
 	}
 	if l.stage == "simulation" {
-		data, err := bag.Prepare(stageCtx, s.validator, l.job)
+		out.bag, err = bag.Prepare(ctx, s.validator, l.job)
 		if err == nil {
-			return s.acceptBag(stageCtx, l, data)
+			return out, nil
 		}
-		if stageCtx.Err() != nil {
-			return stageCtx.Err()
+		if ctx.Err() != nil {
+			return out, ctx.Err()
 		}
 		failure := execution.RunFailure(l.job, err)
 		if failure == "" {
-			return fmt.Errorf("prepare recording: %w", err)
+			return out, fmt.Errorf("prepare recording: %w", err)
 		}
-		result := l.result()
-		result.Status, result.FailureClass = "ERROR", &failure
-		return s.acceptResult(stageCtx, l, result)
+		out.result.Status, out.result.FailureClass = "ERROR", &failure
+		return out, nil
 	}
-	ref := contract.Reference{Path: "bags/" + l.job.ExecutionID + ".jsonl", SHA256: l.bagHash}
-	recording, err := s.validator.ReadBag(stageCtx, s.root, ref.Path, ref.SHA256)
+	ref := out.result.Bag
+	recording, err := s.validator.ReadBag(ctx, s.root, ref.Path, ref.SHA256)
 	if err != nil {
-		return err
+		return out, err
 	}
-	result, err := execution.Analysis(l.result(), l.job, ref)
-	if err != nil {
-		return err
-	}
-	result, err = execution.Score(stageCtx, result, recording, l.job)
-	if err != nil {
-		return err
-	}
-	return s.acceptResult(stageCtx, l, result)
+	out.result, err = execution.Score(ctx, out.result, recording, l.job)
+	return out, err
 }
