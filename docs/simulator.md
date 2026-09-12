@@ -154,7 +154,9 @@ The final position can therefore lie beyond an obstacle or goal.
 
 The [simulation package](../internal/simulator/simulator.go) owns typed configurations, motion records, and termination checks.
 The command package selects examples and formats output.
-Neither layer writes simulation data. Bag publication and metric calculation belong to later changes.
+Neither layer writes simulation data.
+The [bag recorder](bags.md) maps resolved jobs into this simulator and saves complete traces.
+Metric calculation belongs to a later change.
 Run observations are separate from the contract's analysis scores and execution events.
 
 The core accepts tick durations from 1 to 1,000 ms and budgets from 1 to 100,000 steps.

@@ -4,7 +4,8 @@ Yamata is a teaching project for local simulation execution and analysis.
 The first example prepares a data directory through a command-line interface (CLI).
 The exchange validator checks versioned files and their references without changing them.
 The simulator runs three built-in scenarios with two braking controllers.
-Bag writing, scoring, and workers belong to later changes.
+The recorder saves immutable bags, and the inspector checks their content hashes and recorded motion.
+Scoring and workers belong to later changes.
 
 ## Run the first example
 
@@ -65,6 +66,9 @@ Read the [simulator guide](docs/simulator.md) for all scenarios, equations, and 
 
 ## Data directory behavior
 
+To save a simulation, follow the [bag walkthrough](docs/bags.md#save-and-inspect-a-bag).
+It uses complete job files from [examples/jobs](examples/jobs/) and keeps generated bags in a temporary exchange directory.
+
 Use `yamata init --data-dir PATH` to select a different directory.
 Relative paths start at the current directory, regardless of the binary location.
 The setting applies to that command only. Yamata does not save the selected path.
@@ -113,6 +117,11 @@ An administrator account can bypass permission checks. Do not use one for this e
 | [internal/simulator/controller.go](internal/simulator/controller.go) | Selects when each built-in controller starts braking. |
 | [internal/simulator/examples.go](internal/simulator/examples.go) | Defines the three example scenarios. |
 | [cmd/yamata/simulate.go](cmd/yamata/simulate.go) | Runs an example and prints its final observation. |
+| [internal/bag/record.go](internal/bag/record.go) | Maps resolved jobs to simulations and encodes complete bags. |
+| [internal/bag/publish.go](internal/bag/publish.go) | Publishes complete files without replacing conflicting output. |
+| [internal/contract/bag.go](internal/contract/bag.go) | Reads complete bags and verifies pinned file hashes. |
+| [cmd/yamata/record.go](cmd/yamata/record.go) | Records a job and prints its bag hash. |
+| [cmd/yamata/inspect.go](cmd/yamata/inspect.go) | Inspects saved motion without running a simulation. |
 | [cmd/yamata/main_test.go](cmd/yamata/main_test.go) | Checks command behavior, defaults, errors, and help without writes. |
 | [internal/datadir/dir_test.go](internal/datadir/dir_test.go) | Checks file preservation, cleanup, invalid paths, and permission failures. |
 

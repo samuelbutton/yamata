@@ -16,12 +16,16 @@ Usage:
   yamata init [--data-dir PATH]
   yamata validate --exchange-dir PATH FILE [FILE ...]
   yamata simulate [--scenario NAME] [--controller NAME]
+  yamata record --exchange-dir PATH JOB
+  yamata inspect --exchange-dir PATH --sha256 HASH BAG
   yamata help
 
 Commands:
   init  Create and check the data directory.
   validate  Check exchange files and their references.
   simulate  Run a built-in simulation in memory.
+  record  Run a resolved job and save an immutable bag.
+  inspect  Check a saved bag and print its motion summary.
   help  Show this help.
 
 Run yamata COMMAND --help for options.
@@ -61,6 +65,10 @@ func run(args []string, output io.Writer) error {
 		return validate(args[1:], output)
 	case "simulate":
 		return simulate(args[1:], output)
+	case "record":
+		return record(args[1:], output)
+	case "inspect":
+		return inspect(args[1:], output)
 	default:
 		return fmt.Errorf("unknown command %q; run yamata help", args[0])
 	}
