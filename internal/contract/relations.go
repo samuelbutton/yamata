@@ -7,7 +7,7 @@ import (
 )
 
 type inputs struct {
-	Bag              *reference      `json:"bag"`
+	Bag              *Reference      `json:"bag"`
 	AnalysisTemplate json.RawMessage `json:"analysis_template"`
 	RunTemplate      struct {
 		TickMS int `json:"tick_ms"`
@@ -20,7 +20,7 @@ type inputs struct {
 func (s *inspection) checkDocument(ctx context.Context, d document) error {
 	switch d.Kind {
 	case "job":
-		digest, err := contentHash(d.Inputs)
+		digest, err := ContentHash(d.Inputs)
 		if err != nil {
 			return err
 		}
@@ -113,15 +113,15 @@ func (s *inspection) checkResult(ctx context.Context, d document) error {
 	if job.JobKind == "analysis" && (in.Bag == nil || *in.Bag != *d.Bag) {
 		return fmt.Errorf("%w: result uses a different analysis bag", ErrInvalid)
 	}
-	digest, err := contentHash(d.AnalysisTemplate)
+	digest, err := ContentHash(d.AnalysisTemplate)
 	if err != nil {
 		return err
 	}
-	want, err := contentHash(in.AnalysisTemplate)
+	want, err := ContentHash(in.AnalysisTemplate)
 	if err != nil {
 		return err
 	}
-	if digest != want || digest != *d.AnalysisHash || *d.AnalysisID != analysisID(d.ExecutionID, d.Bag.SHA256, digest) {
+	if digest != want || digest != *d.AnalysisHash || *d.AnalysisID != AnalysisID(d.ExecutionID, d.Bag.SHA256, digest) {
 		return ErrHash
 	}
 	if d.Status == "ERROR" {

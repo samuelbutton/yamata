@@ -172,4 +172,5 @@ Retrying the same job validates the existing bytes and synchronizes the director
 Concurrent identical recordings share one accepted bag; conflicting recordings cannot overwrite it.
 
 Publication does not create queue entries, scores, results, or events.
+The separate [standalone run command](metrics.md) records a bag, then calculates scores and publishes its outcome.
 Durable job intake and worker recovery belong to later changes.

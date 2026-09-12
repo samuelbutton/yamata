@@ -95,7 +95,8 @@ func readValue(d *json.Decoder, depth int) (any, error) {
 	return token, nil
 }
 
-func contentHash(raw json.RawMessage) (string, error) {
+// ContentHash applies the restricted canonical encoding for resolved input objects.
+func ContentHash(raw json.RawMessage) (string, error) {
 	value, err := decode(raw)
 	if err != nil {
 		return "", err

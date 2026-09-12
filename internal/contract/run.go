@@ -10,9 +10,12 @@ import (
 
 // RunJob contains resolved execution inputs, checked against the complete job schema.
 type RunJob struct {
-	ExecutionID string    `json:"execution_id"`
-	InputsHash  string    `json:"inputs_hash"`
-	Inputs      RunInputs `json:"inputs"`
+	JobID         string    `json:"job_id"`
+	CorrelationID string    `json:"correlation_id,omitempty"`
+	SHA256        string    `json:"-"`
+	ExecutionID   string    `json:"execution_id"`
+	InputsHash    string    `json:"inputs_hash"`
+	Inputs        RunInputs `json:"inputs"`
 }
 
 // RunInputs maps the public contract without importing simulation or storage logic.
@@ -66,7 +69,7 @@ func (v *Validator) ReadRunJob(ctx context.Context, root *os.Root, path string) 
 	if d.Kind != "job" || d.JobKind != "run" {
 		return RunJob{}, fmt.Errorf("%w: recording requires a run job", ErrInvalid)
 	}
-	digest, err := contentHash(d.Inputs)
+	digest, err := ContentHash(d.Inputs)
 	if err != nil {
 		return RunJob{}, err
 	}
@@ -77,5 +80,6 @@ func (v *Validator) ReadRunJob(ctx context.Context, root *os.Root, path string) 
 	if err := json.Unmarshal(data, &job); err != nil {
 		return RunJob{}, err
 	}
+	job.SHA256 = hashBytes(data)
 	return job, nil
 }

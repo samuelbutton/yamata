@@ -17,6 +17,7 @@ Add necessary technical terms when a change introduces them.
 | Current directory | The directory from which the shell starts a command. |
 | Data directory | A directory reserved for files created by Yamata. |
 | Content hash | A SHA-256 digest calculated from specified bytes. |
+| Contact episode | One continuous period of contact between the vehicle and one obstacle. |
 | Controller | A built-in policy that selects the vehicle's acceleration or braking command. |
 | Correlation ID | An optional caller identifier that passes through unchanged. |
 | Event | An immutable record of an execution transition. |
@@ -25,6 +26,7 @@ Add necessary technical terms when a change introduces them.
 | Exit code | A number that reports command success or failure to the shell. |
 | Go | The programming language and toolchain used to build Yamata. |
 | Hard link | A directory entry that names the same file as another entry. |
+| File lock | Operating-system coordination that prevents cooperating processes from owning the same operation simultaneously. |
 | GNU Make | The build tool that runs targets defined in `Makefile`. |
 | Job | Complete instructions for a run or an analysis of a saved bag. |
 | JSON | JavaScript Object Notation, the structured format used by exchange documents. |
@@ -36,6 +38,7 @@ Add necessary technical terms when a change introduces them.
 | Permission mask | A process setting that can remove permissions from newly created files or directories. |
 | Pinned hash | An expected content hash saved separately from the file being checked. |
 | POSIX shell | A command interpreter that supports the shell syntax used in the examples. |
+| Parts per million | Integer millionths of a quantity; 1,000,000 represents the complete quantity. |
 | Relative path | A path interpreted from the current directory. |
 | Repository | The project's version-controlled source files and history. |
 | Result | Authoritative scores or an explicit terminal failure for a job. |

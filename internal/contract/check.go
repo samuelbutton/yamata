@@ -60,7 +60,7 @@ func (s *inspection) read(path string) ([]byte, error) {
 	// Nonblocking open permits rejection of pipes without waiting for a writer.
 	f, err := s.root.OpenFile(path, os.O_RDONLY|syscall.O_NONBLOCK, 0)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrPath, err)
+		return nil, fmt.Errorf("%w: %w", ErrPath, err)
 	}
 	info, statErr := f.Stat()
 	if statErr != nil || !info.Mode().IsRegular() {
@@ -135,7 +135,7 @@ func (s *inspection) load(ctx context.Context, path, kind string) (checkedFile, 
 	return result, nil
 }
 
-func (s *inspection) reference(ctx context.Context, r *reference, kind string) (document, error) {
+func (s *inspection) reference(ctx context.Context, r *Reference, kind string) (document, error) {
 	if r == nil || !strings.HasPrefix(r.Path, kind+"s/") {
 		return document{}, fmt.Errorf("%w: wrong reference directory", ErrPath)
 	}

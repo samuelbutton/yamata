@@ -17,6 +17,7 @@ Usage:
   yamata validate --exchange-dir PATH FILE [FILE ...]
   yamata simulate [--scenario NAME] [--controller NAME]
   yamata record --exchange-dir PATH JOB
+  yamata run --exchange-dir PATH JOB
   yamata inspect --exchange-dir PATH --sha256 HASH BAG
   yamata help
 
@@ -25,6 +26,7 @@ Commands:
   validate  Check exchange files and their references.
   simulate  Run a built-in simulation in memory.
   record  Run a resolved job and save an immutable bag.
+  run  Record, score, and publish a standalone job outcome.
   inspect  Check a saved bag and print its motion summary.
   help  Show this help.
 
@@ -67,6 +69,8 @@ func run(args []string, output io.Writer) error {
 		return simulate(args[1:], output)
 	case "record":
 		return record(args[1:], output)
+	case "run":
+		return execute(args[1:], output)
 	case "inspect":
 		return inspect(args[1:], output)
 	default:

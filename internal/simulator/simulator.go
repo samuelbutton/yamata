@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+
+	"github.com/samuelbutton/yamata/internal/geometry"
 )
 
 // Version identifies the motion and controller rules implemented by this package.
@@ -164,7 +166,7 @@ func terminal(previous, current Record, world Scenario) StopReason {
 		// including edge contact, so a fast vehicle cannot skip through an obstacle.
 		start := previous.Obstacles[i].PositionMM - previous.PositionMM
 		end := o.PositionMM - current.PositionMM
-		if min(start, end) <= world.VehicleLengthMM && max(start, end) >= -o.LengthMM {
+		if geometry.Contact(start, end, world.VehicleLengthMM, o.LengthMM) {
 			return Collision
 		}
 	}

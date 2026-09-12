@@ -143,7 +143,7 @@ The [bag recorder](bags.md) produces this format from completed simulations.
 
 ## File publication rules
 
-These rules govern file producers. The bag recorder implements them for recordings.
+These rules govern file producers. Recordings, standalone results, and completion events share the same publication mechanism.
 
 1. Validate a complete file before publication.
 2. Serialize competing writes to the same identity through the durable owner.
@@ -162,7 +162,8 @@ Producers preserve immutable files until explicit project cleanup.
 The bag recorder uses an atomic hard link, then removes the temporary name.
 Creating the link fails if the final name already exists; concurrent publishers cannot overwrite each other.
 Matching existing bytes count as duplicate output. Different or unreadable bytes produce a conflict.
-Other producers will need the same publication guarantees.
+Standalone execution publishes the result before its completion event and repairs missing events on an explicit retry.
+Its per-execution file lock serializes local calls. Durable queue ownership remains separate future work.
 
 Future intake records receipt only after durable queue import.
 Future workers publish completion only after the result file is durable and readable.

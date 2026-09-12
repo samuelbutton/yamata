@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
 )
@@ -54,11 +53,14 @@ func (noLoader) Load(string) (any, error) {
 	return nil, errors.New("external schema loading is disabled")
 }
 
-type reference struct {
+// Reference pins exact published bytes within an exchange directory.
+type Reference struct {
 	Path   string `json:"path"`
 	SHA256 string `json:"sha256"`
 }
-type metric struct {
+
+// Metric represents an available score or an explicit unavailable value.
+type Metric struct {
 	Value         *int64 `json:"value"`
 	Version       int    `json:"version"`
 	Unit          string `json:"unit"`
@@ -77,16 +79,16 @@ type document struct {
 	Sequence         int64             `json:"sequence"`
 	Inputs           json.RawMessage   `json:"inputs"`
 	InputsHash       string            `json:"inputs_hash"`
-	Job              *reference        `json:"job"`
-	Bag              *reference        `json:"bag"`
-	Result           *reference        `json:"result"`
+	Job              *Reference        `json:"job"`
+	Bag              *Reference        `json:"bag"`
+	Result           *Reference        `json:"result"`
 	AnalysisID       *string           `json:"analysis_id"`
 	AnalysisTemplate json.RawMessage   `json:"analysis_template"`
 	AnalysisHash     *string           `json:"analysis_hash"`
 	Status           string            `json:"status"`
 	State            string            `json:"state"`
 	FailureClass     *string           `json:"failure_class"`
-	Metrics          map[string]metric `json:"metrics"`
+	Metrics          map[string]Metric `json:"metrics"`
 	FormatVersion    int               `json:"format_version"`
 	TickMS           int               `json:"tick_ms"`
 	RecordCount      int               `json:"record_count"`
@@ -134,9 +136,10 @@ func (d document) identity() string {
 	}
 }
 
-func analysisID(execution, bag, analysis string) string {
+// AnalysisID implements the published execution/bag/analysis identity rule.
+func AnalysisID(execution, bag, analysis string) string {
 	return hashBytes([]byte(execution + "\n" + bag + "\n" + analysis))
 }
 func eventID(d document) string {
-	return hashBytes([]byte(d.JobID + "\n" + d.AttemptID + "\n" + strconv.FormatInt(d.Sequence, 10)))
+	return EventID(d.JobID, d.AttemptID, d.Sequence)
 }

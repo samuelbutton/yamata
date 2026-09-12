@@ -156,7 +156,7 @@ The [simulation package](../internal/simulator/simulator.go) owns typed configur
 The command package selects examples and formats output.
 Neither layer writes simulation data.
 The [bag recorder](bags.md) maps resolved jobs into this simulator and saves complete traces.
-Metric calculation belongs to a later change.
+The [metric calculator](metrics.md) reads the saved motion without running the simulator.
 Run observations are separate from the contract's analysis scores and execution events.
 
 The core accepts tick durations from 1 to 1,000 ms and budgets from 1 to 100,000 steps.

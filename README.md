@@ -5,7 +5,8 @@ The first example prepares a data directory through a command-line interface (CL
 The exchange validator checks versioned files and their references without changing them.
 The simulator runs three built-in scenarios with two braking controllers.
 The recorder saves immutable bags, and the inspector checks their content hashes and recorded motion.
-Scoring and workers belong to later changes.
+Standalone jobs calculate versioned metrics and publish immutable results and completion events.
+Queues and background workers belong to later changes.
 
 ## Run the first example
 
@@ -68,6 +69,8 @@ Read the [simulator guide](docs/simulator.md) for all scenarios, equations, and 
 
 To save a simulation, follow the [bag walkthrough](docs/bags.md#save-and-inspect-a-bag).
 It uses complete job files from [examples/jobs](examples/jobs/) and keeps generated bags in a temporary exchange directory.
+To record and score a job, follow the [metrics walkthrough](docs/metrics.md#run-and-score-a-job).
+The `run` command returns exit code `0` only for a `PASS` outcome.
 
 Use `yamata init --data-dir PATH` to select a different directory.
 Relative paths start at the current directory, regardless of the binary location.
@@ -81,7 +84,7 @@ It preserves existing files and directory permissions.
 Success confirms access at the time of the check; later writes can still fail.
 If a check fails, newly created directories can remain.
 
-All successful commands return exit code `0`.
+Successful utility commands return exit code `0`; `run` also requires a passing score.
 Invalid arguments, storage failures, and output failures return exit code `1`.
 Errors appear on standard error. Help and confirmation appear on standard output.
 Help does not create a data directory.
@@ -122,6 +125,11 @@ An administrator account can bypass permission checks. Do not use one for this e
 | [internal/contract/bag.go](internal/contract/bag.go) | Reads complete bags and verifies pinned file hashes. |
 | [cmd/yamata/record.go](cmd/yamata/record.go) | Records a job and prints its bag hash. |
 | [cmd/yamata/inspect.go](cmd/yamata/inspect.go) | Inspects saved motion without running a simulation. |
+| [internal/metrics/metrics.go](internal/metrics/metrics.go) | Calculates version-one scores from saved motion. |
+| [internal/geometry/contact.go](internal/geometry/contact.go) | Shares swept contact geometry between simulation and scoring. |
+| [internal/standalone/run.go](internal/standalone/run.go) | Publishes standalone results before completion events. |
+| [internal/publication/publication.go](internal/publication/publication.go) | Stages, validates, and synchronizes immutable files. |
+| [cmd/yamata/execute.go](cmd/yamata/execute.go) | Runs one job and reports its authoritative outcome. |
 | [cmd/yamata/main_test.go](cmd/yamata/main_test.go) | Checks command behavior, defaults, errors, and help without writes. |
 | [internal/datadir/dir_test.go](internal/datadir/dir_test.go) | Checks file preservation, cleanup, invalid paths, and permission failures. |
 
