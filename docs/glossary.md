@@ -12,10 +12,12 @@ Add necessary technical terms when a change introduces them.
 | Bag | A JSON Lines file with a header and ordered simulation records. |
 | Binary | The executable program produced by the Go build command. |
 | Checkout | A local copy of the repository files. |
+| Coast | Move with zero commanded acceleration. |
 | CLI | Command-line interface: commands and options entered in a shell. |
 | Current directory | The directory from which the shell starts a command. |
 | Data directory | A directory reserved for files created by Yamata. |
 | Content hash | A SHA-256 digest calculated from specified bytes. |
+| Controller | A built-in policy that selects the vehicle's acceleration or braking command. |
 | Correlation ID | An optional caller identifier that passes through unchanged. |
 | Event | An immutable record of an execution transition. |
 | Exchange directory | The filesystem boundary containing job, event, bag, and result files. |
@@ -36,6 +38,8 @@ Add necessary technical terms when a change introduces them.
 | Repository | The project's version-controlled source files and history. |
 | Result | Authoritative scores or an explicit terminal failure for a job. |
 | SHA-256 | The cryptographic hash function used for file and configuration identity. |
+| Scenario | The initial vehicle state, goal, and obstacle behavior. |
+| Semi-implicit Euler | A step method that updates speed before it uses that speed to update position. |
 | Standard error | The output stream used for error messages. |
 | Standard library | Packages supplied with the Go toolchain. |
 | Standard output | The output stream used for command results and help. |
@@ -43,7 +47,9 @@ Add necessary technical terms when a change introduces them.
 | STE | Simplified Technical English, the writing method defined by ASD-STE100. |
 | Symbolic link | A filesystem entry that points to another path. |
 | Synthetic data | Data created for an example or test without copying private records. |
+| Swept contact | Contact detected anywhere between two successive recorded positions. |
 | Temporary file | A file created for a short operation and removed afterward. |
 | Tick | One fixed step of simulation time. |
+| Trace | The simulator's in-memory sequence of records and its reason for stopping. |
 | Unix milliseconds | Milliseconds since 1970-01-01 at 00:00:00 UTC. |
 | Toolchain | Programs that compile, test, and inspect source code. |

@@ -3,7 +3,8 @@
 Yamata is a teaching project for local simulation execution and analysis.
 The first example prepares a data directory through a command-line interface (CLI).
 The exchange validator checks versioned files and their references without changing them.
-Simulation, recordings, scoring, and workers belong to later changes.
+The simulator runs three built-in scenarios with two braking controllers.
+Bag writing, scoring, and workers belong to later changes.
 
 ## Run the first example
 
@@ -41,6 +42,26 @@ make clean
 
 The `rmdir` command removes only an empty directory.
 The `make clean` command removes the built binary and preserves data directories.
+
+## Run a simulation
+
+Prerequisites: the tools and dependencies listed above.
+From the repository root, run:
+
+```sh
+make build
+./bin/yamata simulate --controller baseline
+./bin/yamata simulate --controller candidate
+```
+
+The default scenario contains a stopped obstacle.
+The baseline stops before contact. The candidate brakes late and reaches contact.
+Each command prints its final observation and returns exit code `0` after a completed simulation.
+A collision is an observed event, not a passing score.
+The command writes no data files.
+
+Run `make clean` to remove the built binary.
+Read the [simulator guide](docs/simulator.md) for all scenarios, equations, and model limits.
 
 ## Data directory behavior
 
@@ -88,6 +109,10 @@ An administrator account can bypass permission checks. Do not use one for this e
 | [contract/v1/](contract/v1/) | Publishes schemas, compatibility examples, and file hashes. |
 | [internal/contract/](internal/contract/) | Validates file shapes, identities, references, and hashes. |
 | [cmd/yamata/validate.go](cmd/yamata/validate.go) | Exposes the read-only exchange validator. |
+| [internal/simulator/simulator.go](internal/simulator/simulator.go) | Advances integer motion and checks contact, goals, and limits. |
+| [internal/simulator/controller.go](internal/simulator/controller.go) | Selects when each built-in controller starts braking. |
+| [internal/simulator/examples.go](internal/simulator/examples.go) | Defines the three example scenarios. |
+| [cmd/yamata/simulate.go](cmd/yamata/simulate.go) | Runs an example and prints its final observation. |
 | [cmd/yamata/main_test.go](cmd/yamata/main_test.go) | Checks command behavior, defaults, errors, and help without writes. |
 | [internal/datadir/dir_test.go](internal/datadir/dir_test.go) | Checks file preservation, cleanup, invalid paths, and permission failures. |
 

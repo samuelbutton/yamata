@@ -15,11 +15,13 @@ const help = `Yamata: local simulation tools.
 Usage:
   yamata init [--data-dir PATH]
   yamata validate --exchange-dir PATH FILE [FILE ...]
+  yamata simulate [--scenario NAME] [--controller NAME]
   yamata help
 
 Commands:
   init  Create and check the data directory.
   validate  Check exchange files and their references.
+  simulate  Run a built-in simulation in memory.
   help  Show this help.
 
 Run yamata COMMAND --help for options.
@@ -57,6 +59,8 @@ func run(args []string, output io.Writer) error {
 		return initialize(args[1:], output)
 	case "validate":
 		return validate(args[1:], output)
+	case "simulate":
+		return simulate(args[1:], output)
 	default:
 		return fmt.Errorf("unknown command %q; run yamata help", args[0])
 	}
