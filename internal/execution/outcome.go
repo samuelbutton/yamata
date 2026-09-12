@@ -3,6 +3,7 @@ package execution
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 
 	"github.com/samuelbutton/yamata/internal/contract"
@@ -25,20 +26,20 @@ func RunFailure(job contract.RunJob, err error) string {
 }
 
 // Analysis attaches the identity of a saved bag and the complete analysis template.
-func Analysis(result contract.Result, job contract.RunJob, ref contract.Reference) (contract.Result, error) {
-	hash, err := contract.ContentHash(job.Inputs.AnalysisTemplate)
+func Analysis(result contract.Result, template json.RawMessage, ref contract.Reference) (contract.Result, error) {
+	hash, err := contract.ContentHash(template)
 	if err != nil {
 		return result, err
 	}
-	id := contract.AnalysisID(job.ExecutionID, ref.SHA256, hash)
+	id := contract.AnalysisID(result.ExecutionID, ref.SHA256, hash)
 	result.Bag, result.AnalysisID, result.AnalysisHash = &ref, &id, &hash
-	result.AnalysisTemplate = job.Inputs.AnalysisTemplate
+	result.AnalysisTemplate = template
 	return result, nil
 }
 
 // Score evaluates recorded motion and retains explicit analysis failures.
-func Score(ctx context.Context, result contract.Result, recording contract.Bag, job contract.RunJob) (contract.Result, error) {
-	scores, err := metrics.Evaluate(ctx, recording, job.Inputs)
+func Score(ctx context.Context, result contract.Result, recording contract.Bag, inputs contract.RunInputs) (contract.Result, error) {
+	scores, err := metrics.Evaluate(ctx, recording, inputs)
 	if ctx.Err() != nil {
 		return result, ctx.Err()
 	}

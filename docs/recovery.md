@@ -9,7 +9,7 @@ The [worker guide](workers.md) explains intake, pool sizes, leases, and file del
 
 The job's existing `priority` field selects a class.
 Both worker pools use the same class order.
-Analysis inherits the run job's priority.
+A run's analysis inherits its priority; an analysis-only job supplies its own priority.
 
 | Priority | Normal dispatch order |
 | ---: | --- |
@@ -39,7 +39,8 @@ The reservation gives class three service during a sustained higher-priority bac
 Classes one and two have no separate reservation; continuous higher-priority arrivals can delay them.
 The policy does not guarantee a wall-clock completion time.
 Changing an accepted job's priority remains an identity conflict.
-Submit a new job and execution identity for changed work.
+Submit new job and execution identities for changed simulation inputs.
+For changed scoring, submit a new analysis job against the original recording; see [reanalysis](reanalysis.md).
 
 ## Failure classes and recovery
 
@@ -178,13 +179,15 @@ Stop every old worker and intake process before opening the exchange with the ne
 Keep a complete backup of the stopped exchange if you need to restore the previous binary.
 Do not copy only the main SQLite file while a writer is active.
 
-The new binary transactionally upgrades private queue schema version one to version two on open.
-It reads priority from each validated saved job and preserves accepted bytes, events, identities, and unfinished stages.
+The new binary transactionally upgrades private queue schema versions one and two to version three on open.
+It reads each validated saved job and preserves accepted bytes, events, identities, and unfinished stages.
+The upgrade also preserves existing retry records, dispatch positions, and lease generations.
+It reserves each original analysis identity before accepting new analysis jobs.
 Invalid saved jobs roll back the complete upgrade.
 Unknown database versions are rejected.
 Public contract version one remains unchanged.
 
-The new dispatch cycles start at zero when upgrading an existing queue.
+Dispatch cycles start at zero only when upgrading version one, which had no dispatch counters.
 Existing leases remain in place; their later recovery receives a new generation.
 Previously terminal outcomes remain terminal and gain no new retry allowance.
 A new-schema database cannot be opened by the previous binary.

@@ -179,8 +179,8 @@ type stageOutput struct {
 func (s *Store) calculate(ctx context.Context, l lease, beforeStage func(context.Context, string) error) (out stageOutput, err error) {
 	out.result = l.result()
 	if l.stage == "analysis" {
-		ref := contract.Reference{Path: "bags/" + l.job.ExecutionID + ".jsonl", SHA256: l.bagHash}
-		out.result, err = execution.Analysis(out.result, l.job, ref)
+		ref := contract.Reference{Path: l.bagPath, SHA256: l.bagHash}
+		out.result, err = execution.Analysis(out.result, l.run.AnalysisTemplate, ref)
 		if err != nil {
 			return out, err
 		}
@@ -197,14 +197,14 @@ func (s *Store) calculate(ctx context.Context, l lease, beforeStage func(context
 		}
 	}
 	if l.stage == "simulation" {
-		out.bag, err = bag.Prepare(ctx, s.validator, l.job)
+		out.bag, err = bag.Prepare(ctx, s.validator, l.runJob())
 		if err == nil {
 			return out, nil
 		}
 		if ctx.Err() != nil {
 			return out, ctx.Err()
 		}
-		failure := execution.RunFailure(l.job, err)
+		failure := execution.RunFailure(l.runJob(), err)
 		if failure == "" {
 			return out, fmt.Errorf("prepare recording: %w", err)
 		}
@@ -216,6 +216,6 @@ func (s *Store) calculate(ctx context.Context, l lease, beforeStage func(context
 	if err != nil {
 		return out, err
 	}
-	out.result, err = execution.Score(ctx, out.result, recording, l.job)
+	out.result, err = execution.Score(ctx, out.result, recording, l.run)
 	return out, err
 }

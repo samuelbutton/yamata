@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"os"
@@ -77,7 +78,7 @@ func TestVersionOneMigrationPreservesWorkAndOutcomes(t *testing.T) {
 	upgraded := open(t, old)
 	var version int
 	must(t, upgraded.db.QueryRow("PRAGMA user_version").Scan(&version))
-	if version != 2 {
+	if version != 3 {
 		t.Fatal(version)
 	}
 	for name, want := range map[string]int{"low": 3, "middle": 2, "high": 0, "record-candidate": 1} {
@@ -136,4 +137,44 @@ func TestMigrationRollsBackInvalidSnapshot(t *testing.T) {
 		t.Fatal("migration left partial tables")
 	}
 	must(t, db.Close())
+}
+
+func TestVersionTwoMigrationRetainsRetryCountersAndForeignKeys(t *testing.T) {
+	dir, s := setup(t)
+	intake(t, s)
+	old := legacyCopy(t, s, dir)
+	db, err := sql.Open("sqlite", filepath.Join(old, ".queue/queue.sqlite"))
+	must(t, err)
+	_, err = db.Exec(upgradeV2)
+	must(t, err)
+	_, err = db.Exec(`UPDATE dispatches SET position=9;
+ UPDATE jobs SET generation=4;
+ INSERT INTO retries(job,stage,failed_generation,failed_attempt,next_attempt,created_ms)
+ SELECT id,'simulation',3,'failed',attempt,started_ms FROM jobs;`)
+	must(t, err)
+	must(t, db.Close())
+	upgraded := open(t, old)
+	if retryCount(t, upgraded) != 1 || position(t, upgraded, "simulation") != 9 || position(t, upgraded, "analysis") != 9 {
+		t.Fatal("upgrade reset durable recovery or scheduling")
+	}
+	var enabled int
+	must(t, upgraded.db.QueryRow("PRAGMA foreign_keys").Scan(&enabled))
+	if enabled != 1 {
+		t.Fatal("foreign keys disabled")
+	}
+	_, err = upgraded.db.Exec("INSERT INTO retries VALUES(999,'analysis',1,'first','second',1)")
+	if err == nil {
+		t.Fatal("foreign key not enforced")
+	}
+	must(t, upgraded.Flush(t.Context()))
+	l := claimed(t, upgraded, "simulation")
+	if l.generation != 5 {
+		t.Fatal(l.generation)
+	}
+	must(t, upgraded.perform(t.Context(), l, time.Minute, func(context.Context, string) error { return errWorkerFailure }))
+	drain(t, upgraded, 1, 1)
+	_, result := history(t, old)
+	if result.Status != "ERROR" || retryCount(t, upgraded) != 1 {
+		t.Fatal("upgrade renewed exhausted retry", result)
+	}
 }

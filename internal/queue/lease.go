@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -12,10 +13,11 @@ import (
 )
 
 type lease struct {
-	id, generation                       int64
-	job                                  contract.RunJob
-	path, attempt, token, stage, bagHash string
-	started                              int64
+	id, generation                                int64
+	job                                           contract.Job
+	run                                           contract.RunInputs
+	path, attempt, token, stage, bagHash, bagPath string
+	started                                       int64
 }
 
 func (s *Store) claim(ctx context.Context, stage string, duration time.Duration) (l lease, err error) {
@@ -27,13 +29,30 @@ func (s *Store) claim(ctx context.Context, stage string, duration time.Duration)
 		if err := tx.QueryRowContext(ctx, "SELECT position FROM dispatches WHERE stage=?", stage).Scan(&position); err != nil {
 			return err
 		}
-		err := tx.QueryRowContext(ctx, `SELECT id,data,path,attempt,started_ms,bag_hash,state,generation FROM jobs
+		err := tx.QueryRowContext(ctx, `SELECT id,data,path,attempt,started_ms,bag_hash,state,generation,bag_path FROM jobs
    WHERE stage=? AND lease_ms<=? AND NOT EXISTS (SELECT 1 FROM outbox WHERE job=jobs.id AND delivered=0)
-   ORDER BY CASE WHEN ?=9 AND priority=3 THEN -1 ELSE priority END, id LIMIT 1`, stage, now, position).Scan(&l.id, &data, &l.path, &l.attempt, &l.started, &l.bagHash, &state, &l.generation)
+   ORDER BY CASE WHEN ?=9 AND priority=3 THEN -1 ELSE priority END, id LIMIT 1`, stage, now, position).Scan(&l.id, &data, &l.path, &l.attempt, &l.started, &l.bagHash, &state, &l.generation, &l.bagPath)
 		if err != nil {
 			return err
 		}
-		l.job, err = s.validator.ParseRunJob(ctx, data)
+		l.job, err = s.validator.ParseJob(ctx, data)
+		if err != nil {
+			return err
+		}
+		if l.job.JobKind == "run" {
+			err = json.Unmarshal(l.job.Inputs, &l.run)
+		} else {
+			var in contract.AnalysisInputs
+			if err = json.Unmarshal(l.job.Inputs, &in); err != nil {
+				return err
+			}
+			original, lookupErr := s.originalRun(ctx, tx, l.job.ExecutionID, in.Bag.SHA256)
+			if lookupErr != nil {
+				return lookupErr
+			}
+			l.run = original.Inputs
+			l.run.AnalysisTemplate = in.AnalysisTemplate
+		}
 		if err != nil {
 			return err
 		}
@@ -49,7 +68,16 @@ func (s *Store) claim(ctx context.Context, stage string, duration time.Duration)
 			return err
 		}
 		if state == "PENDING" {
-			return addEvent(ctx, tx, l.id, l.job, l.attempt, "RUNNING", nil, nil, now)
+			state := "RUNNING"
+			var analysisID *string
+			if stage == "analysis" {
+				result, err := execution.Analysis(l.result(), l.run.AnalysisTemplate, contract.Reference{Path: l.bagPath, SHA256: l.bagHash})
+				if err != nil {
+					return err
+				}
+				state, analysisID = "ANALYZING", result.AnalysisID
+			}
+			return addEvent(ctx, tx, l.id, l.job.JobInfo, l.attempt, state, analysisID, nil, now)
 		}
 		return nil
 	})
@@ -98,18 +126,18 @@ func (l lease) result() contract.Result {
 
 func (s *Store) acceptBag(ctx context.Context, l lease, data []byte) error {
 	ref := contract.Reference{Path: "bags/" + l.job.ExecutionID + ".jsonl", SHA256: contract.Hash(data)}
-	result, err := execution.Analysis(l.result(), l.job, ref)
+	result, err := execution.Analysis(l.result(), l.run.AnalysisTemplate, ref)
 	if err != nil {
 		return err
 	}
 	return s.accept(ctx, l, func(tx *sql.Tx, now int64) error {
-		if _, err := tx.ExecContext(ctx, "UPDATE jobs SET stage='analysis',bag_hash=? WHERE id=?", ref.SHA256, l.id); err != nil {
+		if _, err := tx.ExecContext(ctx, "UPDATE jobs SET stage='analysis',bag_hash=?,bag_path=?,analysis_id=? WHERE id=?", ref.SHA256, ref.Path, result.AnalysisID, l.id); err != nil {
 			return err
 		}
 		if err := addFile(ctx, tx, l.id, ref.Path, "bag", data); err != nil {
 			return err
 		}
-		return addEvent(ctx, tx, l.id, l.job, l.attempt, "ANALYZING", result.AnalysisID, nil, now)
+		return addEvent(ctx, tx, l.id, l.job.JobInfo, l.attempt, "ANALYZING", result.AnalysisID, nil, now)
 	})
 }
 
@@ -140,7 +168,7 @@ func (s *Store) acceptResult(ctx context.Context, l lease, result contract.Resul
 		if err := addFile(ctx, tx, l.id, path, "result", data); err != nil {
 			return err
 		}
-		return addEvent(ctx, tx, l.id, l.job, l.attempt, result.Status, result.AnalysisID, &ref, now)
+		return addEvent(ctx, tx, l.id, l.job.JobInfo, l.attempt, result.Status, result.AnalysisID, &ref, now)
 	})
 }
 
@@ -153,3 +181,7 @@ func (s *Store) release(l lease) error {
 }
 
 func idle(err error) bool { return errors.Is(err, sql.ErrNoRows) || errors.Is(err, ErrLease) }
+
+func (l lease) runJob() contract.RunJob {
+	return contract.RunJob{JobInfo: l.job.JobInfo, Inputs: l.run}
+}

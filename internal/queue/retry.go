@@ -28,7 +28,7 @@ func (s *Store) retry(ctx context.Context, tx *sql.Tx, l lease, analysisID *stri
 	if l.stage == "analysis" {
 		state = "ANALYZING"
 	}
-	if err := addEvent(ctx, tx, l.id, l.job, attempt, state, analysisID, nil, now); err != nil {
+	if err := addEvent(ctx, tx, l.id, l.job.JobInfo, attempt, state, analysisID, nil, now); err != nil {
 		return false, err
 	}
 	return true, nil

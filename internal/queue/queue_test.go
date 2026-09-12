@@ -374,7 +374,7 @@ func TestCrashHelper(t *testing.T) {
 	}
 	if stage == "simulation" {
 		// Stop after actual computation, before acceptance; no bag can escape the lease.
-		if _, err := bag.Prepare(context.Background(), s.validator, l.job); err != nil {
+		if _, err := bag.Prepare(context.Background(), s.validator, l.runJob()); err != nil {
 			t.Fatal(err)
 		}
 	} else {
@@ -541,7 +541,7 @@ func TestQueuedFailureResults(t *testing.T) {
 			case "timeout":
 				in["limits"].(map[string]any)["max_ticks"] = 1
 			case "analysis":
-				in["analysis_template"].(map[string]any)["minimum_obstacle_gap"].(map[string]any)["version"] = 2
+				in["analysis_template"].(map[string]any)["minimum_obstacle_gap"].(map[string]any)["version"] = 3
 			}
 			raw, err := json.Marshal(in)
 			must(t, err)
@@ -598,7 +598,7 @@ func TestHandoffTransactionRollbackAndRecovery(t *testing.T) {
 	l, err := s.claim(t.Context(), "simulation", time.Second)
 	must(t, err)
 	must(t, s.Flush(t.Context()))
-	data, err := bag.Prepare(t.Context(), s.validator, l.job)
+	data, err := bag.Prepare(t.Context(), s.validator, l.runJob())
 	must(t, err)
 	_, err = s.db.Exec(`CREATE TRIGGER reject_handoff BEFORE INSERT ON outbox WHEN NEW.kind='event'
   BEGIN SELECT RAISE(ABORT,'injected event failure'); END`)

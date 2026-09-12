@@ -99,7 +99,7 @@ func TestStandaloneOutcomes(t *testing.T) {
 				case "unavailable":
 					in["scenario"].(map[string]any)["obstacles"] = []any{}
 				case "metric error":
-					template["minimum_obstacle_gap"].(map[string]any)["version"] = 2
+					template["minimum_obstacle_gap"].(map[string]any)["version"] = 3
 				case "controller error":
 					in["controller"].(map[string]any)["version"] = 2
 				case "timeout":

@@ -9,6 +9,7 @@ Standalone jobs calculate versioned metrics and publish immutable results and co
 SQLite queues retain complete jobs and accepted outputs across worker restarts.
 Separate simulation and analysis pools process queued jobs.
 Priority classes select waiting work, and worker failures permit one retry per stage.
+Analysis jobs score saved bags with new metric versions while preserving earlier results.
 
 ## Run the first example
 
@@ -76,6 +77,7 @@ The `run` command returns exit code `0` only for a `PASS` outcome.
 To import jobs and run durable worker pools, follow the [worker walkthrough](docs/workers.md#import-and-process-a-job).
 Use separate exchange directories for standalone and queued execution.
 Read the [recovery guide](docs/recovery.md) for priority order, retry limits, and existing queue upgrades.
+Follow the [reanalysis walkthrough](docs/reanalysis.md) to compare two gap versions against one unchanged recording.
 
 Use `yamata init --data-dir PATH` to select a different directory.
 Relative paths start at the current directory, regardless of the binary location.
@@ -130,7 +132,7 @@ An administrator account can bypass permission checks. Do not use one for this e
 | [internal/contract/bag.go](internal/contract/bag.go) | Reads complete bags and verifies pinned file hashes. |
 | [cmd/yamata/record.go](cmd/yamata/record.go) | Records a job and prints its bag hash. |
 | [cmd/yamata/inspect.go](cmd/yamata/inspect.go) | Inspects saved motion without running a simulation. |
-| [internal/metrics/metrics.go](internal/metrics/metrics.go) | Calculates version-one scores from saved motion. |
+| [internal/metrics/metrics.go](internal/metrics/metrics.go) | Calculates versioned scores from saved motion. |
 | [internal/geometry/contact.go](internal/geometry/contact.go) | Shares swept contact geometry between simulation and scoring. |
 | [internal/standalone/run.go](internal/standalone/run.go) | Publishes standalone results before completion events. |
 | [internal/publication/publication.go](internal/publication/publication.go) | Stages, validates, and synchronizes immutable files. |

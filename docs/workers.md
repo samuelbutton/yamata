@@ -1,6 +1,6 @@
 # Durable queues and worker pools
 
-The `enqueue` command imports a complete run job into SQLite before printing its receipt.
+The `enqueue` command imports a complete run or analysis job into SQLite before printing its receipt.
 The `workers` command runs separate simulation and analysis pools.
 Both commands use an existing exchange directory.
 No service installation or network connection is needed after dependency installation.
@@ -67,7 +67,8 @@ flowchart TD
         AnalysisQueue[Analysis queue and lease]
         Outbox[Ordered outbox with exact file bytes]
     end
-    Intake --> SimQueue
+    Intake -->|Run job| SimQueue
+    Intake -->|Analysis job| AnalysisQueue
     Intake --> Outbox
     SimQueue --> SimPool[Bounded simulation pool]
     SimPool --> AcceptBag[Accept bag with current lease]
@@ -100,7 +101,7 @@ The pinned [Go driver](https://pkg.go.dev/modernc.org/sqlite) does not require a
 A private `open.lock` serializes database initialization across processes.
 Each queue handle uses one database connection.
 Separate handles and local processes coordinate through SQLite transactions.
-Existing version-one queues upgrade transactionally on open; an unknown database version is rejected.
+Existing version-one and version-two queues upgrade transactionally on open; an unknown database version is rejected.
 Stop older workers before upgrading, as described in the [recovery guide](recovery.md#upgrade-an-existing-queue).
 
 ## Duplicate delivery and immutable output
@@ -125,10 +126,11 @@ Use the first walkthrough's cleanup commands after these checks.
 
 Duplicate detection compares exact job bytes, including priority and optional metadata.
 The same job at another direct `jobs/*.json` path remains a duplicate; its first path owns the result reference.
-Changed bytes under an accepted job ID, execution ID, or path cause a conflict.
-A different job ID cannot claim an existing execution ID.
+Changed bytes under an accepted job ID or path cause a conflict.
+Two run jobs cannot claim the same execution ID.
+Analysis jobs can share that execution ID but must select distinct analysis identities.
 Nested job paths are rejected by queue intake.
-Analysis-only jobs require a later change.
+The [reanalysis guide](reanalysis.md) explains saved geometry, identity conflicts, and scoring without simulation.
 
 The receipt follows the committed job snapshot and `PENDING` outbox record.
 A lost receipt can be retried safely.
@@ -156,7 +158,8 @@ A simulation restart can repeat computation that was never accepted.
 An analysis restart reuses the accepted bag.
 Lease recovery preserves the durable attempt ID and event sequence.
 An explicit worker-failure retry receives a new attempt ID.
-Result duration includes elapsed time from the first simulation claim through scoring, including restart and handoff delays.
+Run result duration includes elapsed time from the first simulation claim through scoring, including restart and handoff delays.
+Analysis-only duration starts at its first analysis claim.
 
 A crash after database commit leaves pending outbox records.
 A crash after file publication but before acknowledgment causes identical file bytes to be delivered again.

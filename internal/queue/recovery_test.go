@@ -64,7 +64,7 @@ func workerError(t *testing.T, l lease) contract.Result {
 	r := l.result()
 	if l.stage == "analysis" {
 		var err error
-		r, err = execution.Analysis(r, l.job, contract.Reference{Path: "bags/" + l.job.ExecutionID + ".jsonl", SHA256: l.bagHash})
+		r, err = execution.Analysis(r, l.run.AnalysisTemplate, contract.Reference{Path: "bags/" + l.job.ExecutionID + ".jsonl", SHA256: l.bagHash})
 		must(t, err)
 	}
 	failure := "worker_failure"
@@ -174,7 +174,7 @@ func TestOnlyWorkerFailuresAreRetried(t *testing.T) {
 				case "timeout":
 					in["limits"].(map[string]any)["max_ticks"] = 1
 				case "analysis":
-					in["analysis_template"].(map[string]any)["minimum_obstacle_gap"].(map[string]any)["version"] = 2
+					in["analysis_template"].(map[string]any)["minimum_obstacle_gap"].(map[string]any)["version"] = 3
 				}
 				data, err := json.Marshal(in)
 				must(t, err)
@@ -276,7 +276,7 @@ func TestStaleWorkerCannotConsumeRetryOrReplaceOutput(t *testing.T) {
 			drain(t, s, 1, 1)
 			before := files(t, dir, "results")
 			if stage == "simulation" {
-				data, err := bag.Prepare(t.Context(), s.validator, old.job)
+				data, err := bag.Prepare(t.Context(), s.validator, old.runJob())
 				must(t, err)
 				if err := s.acceptBag(t.Context(), old, data); !errors.Is(err, ErrLease) {
 					t.Fatal(err)

@@ -196,7 +196,7 @@ func (s *Store) Import(ctx context.Context, path string) (receipt Receipt, err e
 	if err != nil {
 		return receipt, err
 	}
-	job, err := s.validator.ParseRunJob(ctx, data)
+	job, err := s.validator.ParseJob(ctx, data)
 	if err != nil {
 		return receipt, err
 	}
@@ -204,7 +204,7 @@ func (s *Store) Import(ctx context.Context, path string) (receipt Receipt, err e
 	err = s.transaction(ctx, func(tx *sql.Tx) error {
 		var matches, conflicts int
 		if err := tx.QueryRowContext(ctx, `SELECT count(*),coalesce(sum(data != ?),0)
-            FROM jobs WHERE job_id=? OR execution_id=? OR path=?`, data, job.JobID, job.ExecutionID, path).Scan(&matches, &conflicts); err != nil {
+            FROM jobs WHERE job_id=? OR (job_kind='run' AND ?='run' AND execution_id=?) OR path=?`, data, job.JobID, job.JobKind, job.ExecutionID, path).Scan(&matches, &conflicts); err != nil {
 			return err
 		}
 		if conflicts != 0 {
@@ -214,9 +214,42 @@ func (s *Store) Import(ctx context.Context, path string) (receipt Receipt, err e
 			receipt.Duplicate = true
 			return nil
 		}
+		stage, bagPath, bagHash := "simulation", "", ""
+		var analysisID *string
+		if job.JobKind == "analysis" {
+			var in contract.AnalysisInputs
+			if err := json.Unmarshal(job.Inputs, &in); err != nil {
+				return err
+			}
+			original, err := s.originalRun(ctx, tx, job.ExecutionID, in.Bag.SHA256)
+			if err != nil {
+				return err
+			}
+			recording, err := s.validator.ReadBag(ctx, s.root, in.Bag.Path, in.Bag.SHA256)
+			if err != nil {
+				return err
+			}
+			if recording.Header.ExecutionID != original.ExecutionID || recording.Header.InputsHash != original.InputsHash || int64(recording.Header.TickMS) != original.Inputs.RunTemplate.TickMS {
+				return contract.ErrConflict
+			}
+			hash, err := contract.ContentHash(in.AnalysisTemplate)
+			if err != nil {
+				return err
+			}
+			value := contract.AnalysisID(job.ExecutionID, in.Bag.SHA256, hash)
+			analysisID = &value
+			var exists bool
+			if err := tx.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM jobs WHERE analysis_id=?)", value).Scan(&exists); err != nil {
+				return err
+			}
+			if exists {
+				return fmt.Errorf("%w: analysis identity already owned", contract.ErrConflict)
+			}
+			stage, bagPath, bagHash = "analysis", in.Bag.Path, in.Bag.SHA256
+		}
 		attempt := newAttempt()
 		now := time.Now().UnixMilli()
-		inserted, err := tx.ExecContext(ctx, `INSERT INTO jobs(job_id,execution_id,path,data,attempt,priority,stage,state,started_ms) VALUES(?,?,?,?,?,?,'simulation','PENDING',?)`, job.JobID, job.ExecutionID, path, data, attempt, job.Priority, now)
+		inserted, err := tx.ExecContext(ctx, `INSERT INTO jobs(job_id,execution_id,path,data,attempt,priority,stage,state,started_ms,job_kind,bag_path,bag_hash,analysis_id) VALUES(?,?,?,?,?,?,?,'PENDING',?,?,?,?,?)`, job.JobID, job.ExecutionID, path, data, attempt, job.Priority, stage, now, job.JobKind, bagPath, bagHash, analysisID)
 		if err != nil {
 			return err
 		}
@@ -227,7 +260,7 @@ func (s *Store) Import(ctx context.Context, path string) (receipt Receipt, err e
 		if err := addFile(ctx, tx, id, path, "job", data); err != nil {
 			return err
 		}
-		return addEvent(ctx, tx, id, job, attempt, "PENDING", nil, nil, now)
+		return addEvent(ctx, tx, id, job.JobInfo, attempt, "PENDING", nil, nil, now)
 	})
 	return receipt, err
 }
@@ -243,7 +276,7 @@ func addFile(ctx context.Context, tx *sql.Tx, id int64, path, kind string, data 
 	_, err := tx.ExecContext(ctx, "INSERT INTO outbox(job,path,kind,data) VALUES(?,?,?,?)", id, path, kind, data)
 	return err
 }
-func addEvent(ctx context.Context, tx *sql.Tx, id int64, job contract.RunJob, attempt, state string, analysis *string, result *contract.Reference, now int64) error {
+func addEvent(ctx context.Context, tx *sql.Tx, id int64, job contract.JobInfo, attempt, state string, analysis *string, result *contract.Reference, now int64) error {
 	var sequence int64
 	if err := tx.QueryRowContext(ctx, "UPDATE jobs SET sequence=sequence+1,state=? WHERE id=? RETURNING sequence", state, id).Scan(&sequence); err != nil {
 		return err

@@ -1,7 +1,7 @@
 # Versioned metrics and standalone outcomes
 
 The metric calculator reads recorded motion from a validated bag.
-It uses the original job's scenario geometry and analysis limits.
+It uses the original run's scenario geometry and the selected job's analysis limits.
 It does not run the simulator or assign scores from controller names.
 The standalone command records a job, reads its saved bag, and publishes the calculated outcome.
 
@@ -95,12 +95,34 @@ The default limit is zero, so this metric passes even though the bodies overlap.
 Collision count independently blocks the aggregate outcome.
 
 This sampled center distance is not edge clearance or the minimum distance between ticks.
-A later metric version will change the gap definition while preserving version one's meaning.
+Version two measures edge clearance while preserving version one's meaning.
 The current calculator rejects unsupported versions instead of substituting another formula.
 
 With no obstacles, the minimum is unavailable.
 Its `value` and `pass` fields are `null`, and its evidence list is empty.
 A missing value never becomes zero or a passing flag.
+
+## Minimum obstacle gap, version two
+
+Version two measures vehicle-edge clearance at the same recorded tick boundaries.
+It considers obstacles ahead and behind, using both body lengths.
+
+```text
+relative_rear = obstacle_position - vehicle_position
+clearance_mm = max(0, relative_rear - vehicle_length,
+                  -relative_rear - obstacle_length)
+minimum_obstacle_gap = minimum(clearance_mm over all recorded obstacles)
+```
+
+Touching and overlapping bodies have zero clearance.
+Integer edge positions require no center rounding.
+The metric retains the earliest minimum tick and passes when clearance meets `minimum_mm`.
+With no obstacles, value and pass remain null, evidence remains empty, and the recorded metric version remains two.
+
+This metric samples boundaries; it does not calculate the minimum clearance between ticks.
+A between-tick crossing can have positive sampled clearance while swept collision count still forces `FAIL`.
+The candidate's final overlap gives zero clearance at tick 22.
+Follow the [reanalysis walkthrough](reanalysis.md) to compare both formulas against the same recording.
 
 ## Goal progress, version one
 

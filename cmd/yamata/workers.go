@@ -16,7 +16,7 @@ import (
 
 const enqueueHelp = `Usage: yamata enqueue --exchange-dir PATH JOB
 
-Import a complete run job into SQLite before printing its receipt.
+Import a complete run or analysis job into SQLite before printing its receipt.
 JOB is a relative jobs/*.json path. Identical deliveries share one receipt.
 Options must precede JOB.
 

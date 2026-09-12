@@ -32,8 +32,8 @@ func Evaluate(ctx context.Context, bag contract.Bag, in contract.RunInputs) (Sco
 		return Scores{}, err
 	}
 	for _, name := range []string{"collision_count", "minimum_obstacle_gap", "goal_progress"} {
-		if limits[name].Version != 1 {
-			return Scores{}, fmt.Errorf("%w: metric %s requires version 1", contract.ErrVersion, name)
+		if limits[name].Version != 1 && !(name == "minimum_obstacle_gap" && limits[name].Version == 2) {
+			return Scores{}, fmt.Errorf("%w: unsupported metric version for %s", contract.ErrVersion, name)
 		}
 	}
 	if len(limits) != 3 || limits["collision_count"].Maximum != 0 {
@@ -90,6 +90,9 @@ func Evaluate(ctx context.Context, bag contract.Bag, in contract.RunInputs) (Sco
 				distance = -distance
 			}
 			distance /= 2
+			if limits["minimum_obstacle_gap"].Version == 2 {
+				distance = max(int64(0), end-s.VehicleLengthMM, -end-o.LengthMM)
+			}
 			if minimum == nil || distance < *minimum {
 				minimum = &distance
 				minimumTick = r.Tick
@@ -109,6 +112,9 @@ func Evaluate(ctx context.Context, bag contract.Bag, in contract.RunInputs) (Sco
 		progress := min(int64(1000000), max(int64(0), (last.PositionMM-s.StartPositionMM)*1000000/distance))
 		values["goal_progress"] = measured(progress, "ppm", progress >= limits["goal_progress"].MinimumPPM, []int{last.Tick})
 	}
+	gap := values["minimum_obstacle_gap"]
+	gap.Version = limits["minimum_obstacle_gap"].Version
+	values["minimum_obstacle_gap"] = gap
 	status := "PASS"
 	for _, m := range values {
 		if m.Pass != nil && !*m.Pass {

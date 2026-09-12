@@ -84,12 +84,12 @@ func Run(ctx context.Context, directory, jobPath string) (out Outcome, err error
 		if recording.Header.ExecutionID != job.ExecutionID || recording.Header.InputsHash != job.InputsHash {
 			return out, contract.ErrConflict
 		}
-		result, err = execution.Analysis(result, job, contract.Reference{Path: pub.Path, SHA256: pub.SHA256})
+		result, err = execution.Analysis(result, job.Inputs.AnalysisTemplate, contract.Reference{Path: pub.Path, SHA256: pub.SHA256})
 		if err != nil {
 			return out, err
 		}
 		path = "results/" + *result.AnalysisID + ".json"
-		result, err = execution.Score(ctx, result, recording, job)
+		result, err = execution.Score(ctx, result, recording, job.Inputs)
 		if err != nil {
 			return out, err
 		}

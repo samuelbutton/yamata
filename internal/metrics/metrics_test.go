@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/samuelbutton/yamata/internal/contract"
@@ -201,4 +202,61 @@ func FuzzEvaluate(f *testing.F) {
 			t.Fatal("progress outside range")
 		}
 	})
+}
+
+func TestEdgeClearanceByHand(t *testing.T) {
+	for _, tc := range []struct {
+		name                   string
+		obstacle, length, want int64
+	}{
+		{"ahead", 2000, 501, 1000}, {"behind", -2000, 501, 1499},
+		{"front touch", 1000, 501, 0}, {"rear touch", -501, 501, 0},
+		{"overlap", 500, 501, 0}, {"enclosed", -100, 2000, 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			bag, in := fixture(0, 0)
+			in.AnalysisTemplate = json.RawMessage(strings.Replace(template, `"minimum_obstacle_gap":{"version":1`, `"minimum_obstacle_gap":{"version":2`, 1))
+			in.Scenario.Obstacles[0] = contract.Obstacle{PositionMM: tc.obstacle, LengthMM: tc.length}
+			for i := range bag.Records {
+				bag.Records[i].Obstacles[0] = in.Scenario.Obstacles[0]
+			}
+			scores, err := Evaluate(t.Context(), bag, in)
+			if err != nil {
+				t.Fatal(err)
+			}
+			gap := scores.Metrics["minimum_obstacle_gap"]
+			if gap.Version != 2 || gap.Value == nil || *gap.Value != tc.want || !reflect.DeepEqual(gap.EvidenceTicks, []int{0}) {
+				t.Fatal(gap)
+			}
+		})
+	}
+}
+
+func TestEdgeGapAvailabilityAndSweptCollision(t *testing.T) {
+	bag, in := fixture(0, 10000)
+	in.AnalysisTemplate = json.RawMessage(strings.Replace(template, `"minimum_obstacle_gap":{"version":1`, `"minimum_obstacle_gap":{"version":2`, 1))
+	scores, err := Evaluate(t.Context(), bag, in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Samples are separated by 1000 and 7500 mm, but the bodies cross between ticks.
+	if *scores.Metrics["minimum_obstacle_gap"].Value != 1000 || *scores.Metrics["collision_count"].Value != 1 || scores.Status != "FAIL" {
+		t.Fatal(scores)
+	}
+	in.Scenario.Obstacles = []contract.Obstacle{}
+	for i := range bag.Records {
+		bag.Records[i].Obstacles = []contract.Obstacle{}
+	}
+	scores, err = Evaluate(t.Context(), bag, in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	gap := scores.Metrics["minimum_obstacle_gap"]
+	if gap.Version != 2 || gap.Value != nil || gap.Pass != nil || len(gap.EvidenceTicks) != 0 || scores.Status != "WARN" {
+		t.Fatal(scores)
+	}
+	in.AnalysisTemplate = json.RawMessage(strings.Replace(string(in.AnalysisTemplate), `"version":2`, `"version":3`, 1))
+	if _, err := Evaluate(t.Context(), bag, in); !errors.Is(err, contract.ErrVersion) {
+		t.Fatal(err)
+	}
 }
