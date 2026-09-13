@@ -10,12 +10,15 @@ SQLite queues retain complete jobs and accepted outputs across worker restarts.
 Separate simulation and analysis pools process queued jobs.
 Priority classes select waiting work, and worker failures permit one retry per stage.
 Analysis jobs score saved bags with new metric versions while preserving earlier results.
+Queue inspection exposes progress, and controlled worker failures demonstrate recovery.
+An independent reader indexes published outcomes in its own database.
 
 ## Run the first example
 
 Prerequisites: Go 1.25.13, GNU Make 3.81 or later, and a POSIX shell on macOS or Linux.
 Use an ordinary user account with write access to the checkout.
 Install the pinned Go dependencies with `go mod download` from the repository root.
+Then run `go mod download` from `examples/reader/` for the independent reader module.
 Builds, tests, and commands need no network connection after you install the tools and dependencies.
 
 From the repository root, run:
@@ -78,6 +81,7 @@ To import jobs and run durable worker pools, follow the [worker walkthrough](doc
 Use separate exchange directories for standalone and queued execution.
 Read the [recovery guide](docs/recovery.md) for priority order, retry limits, and existing queue upgrades.
 Follow the [reanalysis walkthrough](docs/reanalysis.md) to compare two gap versions against one unchanged recording.
+Use the [operations walkthrough](docs/operations.md) to inspect queues, control failures, and recover an independent reader.
 
 Use `yamata init --data-dir PATH` to select a different directory.
 Relative paths start at the current directory, regardless of the binary location.
@@ -139,6 +143,9 @@ An administrator account can bypass permission checks. Do not use one for this e
 | [cmd/yamata/execute.go](cmd/yamata/execute.go) | Runs one job and reports its authoritative outcome. |
 | [internal/queue/](internal/queue/) | Owns SQLite intake, stage leases, accepted outputs, and ordered outbox delivery. |
 | [internal/queue/migrate.go](internal/queue/migrate.go) | Upgrades saved queue state without changing accepted outputs. |
+| [examples/reader/](examples/reader/) | Independently validates published files and owns its result index and event progress. |
+| [internal/queue/inspect.go](internal/queue/inspect.go) | Reads queue snapshots without claiming or changing jobs. |
+| [internal/queue/fault.go](internal/queue/fault.go) | Configures deterministic failures before a job starts. |
 | [internal/queue/retry.go](internal/queue/retry.go) | Commits one worker-failure retry per stage with its next attempt event. |
 | [internal/execution/](internal/execution/) | Shares analysis identity, scoring outcomes, and run failure classification. |
 | [internal/ownership/](internal/ownership/) | Reserves one execution mode per exchange. |

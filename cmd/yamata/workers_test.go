@@ -90,3 +90,43 @@ func TestLostReceiptOutputCanBeRetried(t *testing.T) {
 		t.Fatal(out.String())
 	}
 }
+
+func TestOperationalCommands(t *testing.T) {
+	dir := t.TempDir()
+	for _, args := range [][]string{{"queue", "--help"}, {"fault", "--help"}, {"queue", "--limit", "0"}, {"fault", "--job", "x", "--stage", "analysis", "--failures", "3"}} {
+		args = append(args, "--exchange-dir", dir)
+		err := run(args, io.Discard)
+		if args[1] == "--help" && err != nil {
+			t.Fatal(err)
+		}
+		if args[1] != "--help" && err == nil {
+			t.Fatal("invalid input accepted")
+		}
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil || len(entries) != 0 {
+		t.Fatal("operations initialized empty exchange", err)
+	}
+	if err := os.CopyFS(filepath.Join(dir, "jobs"), os.DirFS("../../examples/jobs")); err != nil {
+		t.Fatal(err)
+	}
+	for _, args := range [][]string{
+		{"enqueue", "--exchange-dir", dir, "jobs/candidate.json"},
+		{"fault", "--exchange-dir", dir, "--job", "record-candidate", "--stage", "analysis", "--failures", "1"},
+		{"workers", "--exchange-dir", dir, "--drain"},
+	} {
+		if err := run(args, io.Discard); err != nil {
+			t.Fatal(err)
+		}
+	}
+	var out bytes.Buffer
+	if err := run([]string{"queue", "--exchange-dir", dir}, &out); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out.String(), `"analysis_retries": 1`) || !strings.Contains(out.String(), `"stage": "done"`) {
+		t.Fatal(out.String())
+	}
+	if err := run([]string{"queue", "--exchange-dir", dir}, queueFailedWriter{}); !errors.Is(err, io.ErrClosedPipe) {
+		t.Fatal(err)
+	}
+}

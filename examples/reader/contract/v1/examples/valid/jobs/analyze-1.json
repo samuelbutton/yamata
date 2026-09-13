@@ -1,0 +1,30 @@
+{
+  "contract_version": 1,
+  "kind": "job",
+  "execution_id": "exec-1",
+  "job_id": "analyze-1",
+  "job_kind": "analysis",
+  "priority": 1,
+  "correlation_id": "example-1",
+  "inputs": {
+    "bag": {
+      "path": "bags/exec-1.jsonl",
+      "sha256": "cb889995b90c3f208a14bb69811eb4faabe7d994fc0ca01087461f5dfc1f2ad9"
+    },
+    "analysis_template": {
+      "collision_count": {
+        "version": 1,
+        "maximum": 0
+      },
+      "minimum_obstacle_gap": {
+        "version": 1,
+        "minimum_mm": 100
+      },
+      "goal_progress": {
+        "version": 1,
+        "minimum_ppm": 1000000
+      }
+    }
+  },
+  "inputs_hash": "35141654236c5ae15613e3635d20aeb668033e550e321526f51e97af28f69bf6"
+}

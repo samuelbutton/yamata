@@ -101,7 +101,7 @@ The pinned [Go driver](https://pkg.go.dev/modernc.org/sqlite) does not require a
 A private `open.lock` serializes database initialization across processes.
 Each queue handle uses one database connection.
 Separate handles and local processes coordinate through SQLite transactions.
-Existing version-one and version-two queues upgrade transactionally on open; an unknown database version is rejected.
+Existing version-one through version-three queues upgrade transactionally on open; an unknown database version is rejected.
 Stop older workers before upgrading, as described in the [recovery guide](recovery.md#upgrade-an-existing-queue).
 
 ## Duplicate delivery and immutable output
@@ -207,3 +207,5 @@ The first execution command reserves either queued or standalone ownership.
 Use separate exchanges for `run` and queued workers; mixing those execution modes is rejected.
 Keep ownership markers and lock files until you remove the complete exchange.
 The `record`, `inspect`, and `validate` commands retain their file-based behavior.
+
+Inspect queue state with `yamata queue`; see the [operations guide](operations.md) for paging, deterministic failures, and reader recovery.

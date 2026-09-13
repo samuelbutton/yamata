@@ -78,7 +78,7 @@ func TestVersionOneMigrationPreservesWorkAndOutcomes(t *testing.T) {
 	upgraded := open(t, old)
 	var version int
 	must(t, upgraded.db.QueryRow("PRAGMA user_version").Scan(&version))
-	if version != 3 {
+	if version != 4 {
 		t.Fatal(version)
 	}
 	for name, want := range map[string]int{"low": 3, "middle": 2, "high": 0, "record-candidate": 1} {

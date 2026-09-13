@@ -21,10 +21,10 @@ func (s *Store) migrate(ctx context.Context) (err error) {
 	if err := conn.QueryRowContext(ctx, "PRAGMA user_version").Scan(&version); err != nil {
 		return err
 	}
-	if version == 3 {
+	if version == 4 {
 		return nil
 	}
-	if version < 0 || version > 3 {
+	if version < 0 || version > 4 {
 		return fmt.Errorf("unsupported queue database version %d", version)
 	}
 	// SQLite table rebuilding requires foreign keys disabled outside the transaction.
@@ -43,52 +43,57 @@ func (s *Store) migrate(ctx context.Context) (err error) {
 		return err
 	}
 	defer tx.Rollback()
-	if version == 0 {
-		if _, err := tx.ExecContext(ctx, schema); err != nil {
+	if version < 3 {
+		if version == 0 {
+			if _, err := tx.ExecContext(ctx, schema); err != nil {
+				return err
+			}
+		}
+		if version < 2 {
+			if _, err := tx.ExecContext(ctx, upgradeV2); err != nil {
+				return err
+			}
+		}
+		if _, err := tx.ExecContext(ctx, upgradeV3); err != nil {
 			return err
 		}
-	}
-	if version < 2 {
-		if _, err := tx.ExecContext(ctx, upgradeV2); err != nil {
-			return err
-		}
-	}
-	if _, err := tx.ExecContext(ctx, upgradeV3); err != nil {
-		return err
-	}
-	rows, err := tx.QueryContext(ctx, "SELECT id,data,bag_hash FROM jobs ORDER BY id")
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var id int64
-		var data []byte
-		var bagHash string
-		if err := rows.Scan(&id, &data, &bagHash); err != nil {
-			return err
-		}
-		job, err := s.validator.ParseRunJob(ctx, data)
+		rows, err := tx.QueryContext(ctx, "SELECT id,data,bag_hash FROM jobs ORDER BY id")
 		if err != nil {
 			return err
 		}
-		var analysisID *string
-		if bagHash != "" {
-			hash, err := contract.ContentHash(job.Inputs.AnalysisTemplate)
+		defer rows.Close()
+		for rows.Next() {
+			var id int64
+			var data []byte
+			var bagHash string
+			if err := rows.Scan(&id, &data, &bagHash); err != nil {
+				return err
+			}
+			job, err := s.validator.ParseRunJob(ctx, data)
 			if err != nil {
 				return err
 			}
-			value := contract.AnalysisID(job.ExecutionID, bagHash, hash)
-			analysisID = &value
+			var analysisID *string
+			if bagHash != "" {
+				hash, err := contract.ContentHash(job.Inputs.AnalysisTemplate)
+				if err != nil {
+					return err
+				}
+				value := contract.AnalysisID(job.ExecutionID, bagHash, hash)
+				analysisID = &value
+			}
+			if _, err := tx.ExecContext(ctx, "UPDATE jobs SET priority=?,bag_path=?,analysis_id=? WHERE id=?", job.Priority, "bags/"+job.ExecutionID+".jsonl", analysisID, id); err != nil {
+				return err
+			}
 		}
-		if _, err := tx.ExecContext(ctx, "UPDATE jobs SET priority=?,bag_path=?,analysis_id=? WHERE id=?", job.Priority, "bags/"+job.ExecutionID+".jsonl", analysisID, id); err != nil {
+		if err := rows.Err(); err != nil {
+			return err
+		}
+		if err := rows.Close(); err != nil {
 			return err
 		}
 	}
-	if err := rows.Err(); err != nil {
-		return err
-	}
-	if err := rows.Close(); err != nil {
+	if _, err := tx.ExecContext(ctx, upgradeV4); err != nil {
 		return err
 	}
 	checks, err := tx.QueryContext(ctx, "PRAGMA foreign_key_check")
@@ -159,4 +164,14 @@ CREATE UNIQUE INDEX run_execution ON jobs(execution_id) WHERE job_kind='run';
 CREATE INDEX ready_jobs ON jobs(stage,lease_ms,id);
 CREATE INDEX priority_jobs ON jobs(stage,priority,id);
 PRAGMA user_version=3;
+`
+
+const upgradeV4 = `
+CREATE TABLE faults (
+ job INTEGER NOT NULL REFERENCES jobs(id),
+ stage TEXT NOT NULL CHECK(stage IN ('simulation','analysis')),
+ failures INTEGER NOT NULL CHECK(failures IN (1,2)),
+ PRIMARY KEY(job,stage)
+);
+PRAGMA user_version=4;
 `

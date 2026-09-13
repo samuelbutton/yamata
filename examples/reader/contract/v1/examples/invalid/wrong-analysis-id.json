@@ -1,0 +1,67 @@
+{
+  "contract_version": 1,
+  "kind": "result",
+  "execution_id": "exec-1",
+  "job_id": "run-1",
+  "attempt_id": "analysis-1",
+  "correlation_id": "example-1",
+  "job": {
+    "path": "jobs/run-1.json",
+    "sha256": "0f85848703496b07b55d66c7aaf80739e137291f90b75ba45bb4dccf133828a8"
+  },
+  "inputs_hash": "648cce0ff71c92754f04495fbec40ea0ef6ab8294565fdefce04e6d1ab8b5690",
+  "bag": {
+    "path": "bags/exec-1.jsonl",
+    "sha256": "cb889995b90c3f208a14bb69811eb4faabe7d994fc0ca01087461f5dfc1f2ad9"
+  },
+  "analysis_id": "0000000000000000000000000000000000000000000000000000000000000000",
+  "analysis_template": {
+    "collision_count": {
+      "version": 1,
+      "maximum": 0
+    },
+    "minimum_obstacle_gap": {
+      "version": 1,
+      "minimum_mm": 0
+    },
+    "goal_progress": {
+      "version": 1,
+      "minimum_ppm": 1000000
+    }
+  },
+  "analysis_hash": "ffdad3aaa902cc86958945a1f1ac0be8d7ca25355f4f409f771f6aa808047d07",
+  "status": "FAIL",
+  "failure_class": null,
+  "timing": {
+    "duration_ms": 2
+  },
+  "metrics": {
+    "collision_count": {
+      "value": 1,
+      "version": 1,
+      "unit": "count",
+      "pass": false,
+      "evidence_ticks": [
+        1
+      ]
+    },
+    "minimum_obstacle_gap": {
+      "value": 0,
+      "version": 1,
+      "unit": "mm",
+      "pass": true,
+      "evidence_ticks": [
+        1
+      ]
+    },
+    "goal_progress": {
+      "value": 500000,
+      "version": 1,
+      "unit": "ppm",
+      "pass": false,
+      "evidence_ticks": [
+        1
+      ]
+    }
+  }
+}

@@ -170,8 +170,8 @@ Temporary databases exercise restart and concurrent claim behavior.
 Expect exit code `0`.
 Tests remove their temporary data automatically; no manual cleanup is needed.
 
-The injection seam is confined to package tests.
-Public deterministic failure controls belong to a later change.
+The package tests also use an internal computation seam.
+The [operations guide](operations.md#deterministic-failures-and-recovery) describes public deterministic failure controls.
 
 ## Upgrade an existing queue
 
@@ -179,7 +179,7 @@ Stop every old worker and intake process before opening the exchange with the ne
 Keep a complete backup of the stopped exchange if you need to restore the previous binary.
 Do not copy only the main SQLite file while a writer is active.
 
-The new binary transactionally upgrades private queue schema versions one and two to version three on open.
+The new binary transactionally upgrades private queue schema versions one through three to version four on open.
 It reads each validated saved job and preserves accepted bytes, events, identities, and unfinished stages.
 The upgrade also preserves existing retry records, dispatch positions, and lease generations.
 It reserves each original analysis identity before accepting new analysis jobs.

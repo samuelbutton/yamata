@@ -1,0 +1,23 @@
+{
+  "contract_version": 1,
+  "kind": "result",
+  "execution_id": "exec-error",
+  "job_id": "run-error",
+  "attempt_id": "run-1",
+  "correlation_id": "example-1",
+  "job": {
+    "path": "jobs/run-error.json",
+    "sha256": "6acb1b82f7a4419aa26e0495d999148be5f26ce08394aa826a2d09109b376f5b"
+  },
+  "inputs_hash": "648cce0ff71c92754f04495fbec40ea0ef6ab8294565fdefce04e6d1ab8b5690",
+  "bag": null,
+  "analysis_id": null,
+  "analysis_template": null,
+  "analysis_hash": null,
+  "status": "ERROR",
+  "failure_class": "simulation_timeout",
+  "timing": {
+    "duration_ms": 2
+  },
+  "metrics": null
+}

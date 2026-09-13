@@ -1,0 +1,16 @@
+{
+  "contract_version": 1,
+  "kind": "event",
+  "execution_id": "exec-1",
+  "job_id": "run-1",
+  "attempt_id": "run-1",
+  "correlation_id": "example-1",
+  "event_id": "2556ed05f1eb232cf040515db9d2d4a54c18b97a4efb1a1770d5f949dfafe579",
+  "sequence": 1,
+  "state": "PENDING",
+  "analysis_id": null,
+  "result": null,
+  "event_type": "execution_transition",
+  "producer": "yamata",
+  "created_at_ms": 0
+}

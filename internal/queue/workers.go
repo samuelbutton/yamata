@@ -196,6 +196,13 @@ func (s *Store) calculate(ctx context.Context, l lease, beforeStage func(context
 			return out, err
 		}
 	}
+	fail, err := s.injectedFailure(ctx, l)
+	if err != nil {
+		return out, err
+	}
+	if fail {
+		return out, errWorkerFailure
+	}
 	if l.stage == "simulation" {
 		out.bag, err = bag.Prepare(ctx, s.validator, l.runJob())
 		if err == nil {

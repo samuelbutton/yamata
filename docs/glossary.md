@@ -24,6 +24,7 @@ Add necessary technical terms when a change introduces them.
 | Exchange directory | The filesystem boundary containing job, event, bag, and result files. |
 | Execution | One identified simulation run. |
 | Exit code | A number that reports command success or failure to the shell. |
+| Failure control | A fixed configuration that makes a selected worker stage report one or two failures. |
 | Generation | An increasing claim number that distinguishes current ownership from stale worker claims. |
 | Go | The programming language and toolchain used to build Yamata. |
 | Hard link | A directory entry that names the same file as another entry. |
@@ -48,6 +49,7 @@ Add necessary technical terms when a change introduces them.
 | Receipt | Confirmation that a complete job was committed to the queue. |
 | Relative path | A path interpreted from the current directory. |
 | Repository | The project's version-controlled source files and history. |
+| Result index | A reader-owned collection derived from authoritative published result files. |
 | Result | Authoritative scores or an explicit terminal failure for a job. |
 | SHA-256 | The cryptographic hash function used for file and configuration identity. |
 | Retry | A new attempt after an explicitly reported failure, subject to a durable per-stage allowance. |

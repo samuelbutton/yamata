@@ -29,7 +29,8 @@ make check
 ```
 
 The formatting command updates Go source formatting.
-The check command requires formatted code, runs tests and static checks, and builds `bin/yamata`.
+The check command requires formatted code and runs tests and static checks in both Go modules.
+It builds `bin/yamata` and `bin/reader`.
 Expect exit code `0` from both commands.
 Tests remove their temporary data automatically.
 
@@ -48,6 +49,8 @@ After an intentional contract-file change, run `make generate` and review the up
 Then run `make check`. The tests reject stale generated files and invalid compatibility examples.
 In the review description, explain the behavior, its limits, and the checks you ran.
 Record the tested operating system and tool versions in that description.
+For worker, publication, or reader changes, run `python3 tests/operations.py` after building both binaries.
+This process check requires Python 3.11 or later and removes its temporary data automatically.
 
 ## Public names
 
