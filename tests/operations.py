@@ -7,26 +7,11 @@ import selectors
 import shutil
 import subprocess
 import tempfile
+import sys
 
-ROOT = Path(__file__).resolve().parents[1]
-ENGINE = ROOT / "bin/yamata"
-READER = ROOT / "bin/reader"
-
-
-def call(binary, *args, succeeds=True):
-    result = subprocess.run(
-        [str(binary), *map(str, args)], capture_output=True, text=True, timeout=30
-    )
-    assert (result.returncode == 0) == succeeds, (args, result.stdout, result.stderr)
-    return result.stdout
-
-
-def snapshot(exchange):
-    return json.loads(call(ENGINE, "queue", "--exchange-dir", exchange))
-
-
-def listing(state):
-    return json.loads(call(READER, "list", "--state-dir", state))
+sys.dont_write_bytecode = True
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+from demo import ROOT, ENGINE, READER, call, snapshot, listing, public_files
 
 
 def prepare(parent):
@@ -35,15 +20,6 @@ def prepare(parent):
     shutil.copytree(ROOT / "examples/jobs", exchange / "jobs")
     call(ENGINE, "enqueue", "--exchange-dir", exchange, "jobs/candidate.json")
     return exchange
-
-
-def public_files(exchange):
-    return {
-        str(path.relative_to(exchange)): path.read_bytes()
-        for folder in ("jobs", "bags", "results", "events")
-        for path in (exchange / folder).glob("*")
-        if path.is_file()
-    }
 
 
 def check_outage(parent):

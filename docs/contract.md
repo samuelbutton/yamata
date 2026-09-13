@@ -26,6 +26,7 @@ The examples are synthetic contract fixtures.
 They do not claim to be output from an implemented simulator or scoring engine.
 The tests accept the valid examples and reject each case in [invalid-cases.json](../contract/v1/examples/invalid-cases.json).
 A separate test compares two files with conflicting job content.
+The [generated reference exchange](../examples/reference/README.md) contains actual simulator and worker output for independent clients.
 
 Every document has a kind and contract version, except tick records inside a versioned bag.
 All integers use decimal notation without fractions or exponents.
@@ -112,7 +113,8 @@ Each bag belongs to one execution.
 The same identity and identical file bytes represent a duplicate delivery.
 Different bytes under the same identity are a conflict, including formatting-only changes.
 One invocation checks all selected files and their references together.
-Separate validator invocations keep no history; durable intake must later enforce uniqueness across imports.
+Separate validator invocations keep no history.
+[Durable intake](workers.md#duplicate-delivery-and-immutable-output) enforces uniqueness across imports.
 Include all candidate files in one invocation when checking for conflicts.
 
 ## States and absent values
@@ -125,6 +127,7 @@ Terminal events require a result reference. Other events cannot contain one.
 An `ANALYZING` event requires an analysis ID.
 `PENDING` and `RUNNING` events have no analysis ID.
 An event sequence increases within a job; attempt IDs distinguish worker attempts.
+
 Events also identify their producer and transition type, with a creation timestamp in Unix milliseconds.
 The validator checks event identity and result agreement, without requiring a complete event history.
 
@@ -162,12 +165,14 @@ Producers preserve immutable files until explicit project cleanup.
 The bag recorder uses an atomic hard link, then removes the temporary name.
 Creating the link fails if the final name already exists; concurrent publishers cannot overwrite each other.
 Matching existing bytes count as duplicate output. Different or unreadable bytes produce a conflict.
-Standalone execution publishes the result before its completion event and repairs missing events on an explicit retry.
-Its per-execution file lock serializes local calls. Durable queue ownership remains separate future work.
 
-Future intake records receipt only after durable queue import.
-Future workers publish completion only after the result file is durable and readable.
-A database outbox and startup recovery must repair interruptions between durable state and file publication.
+Standalone execution publishes the result before its completion event and repairs missing events on an explicit retry.
+Its per-execution file lock serializes local calls.
+Queued execution reserves separate exchange ownership and accepts outputs through current stage leases.
+
+Intake reports receipt only after durable queue import.
+Workers publish completion only after the result file is durable and readable.
+The [database outbox](workers.md#queue-ownership-and-handoff) repairs interruptions between durable acceptance and file publication when workers restart.
 Atomic file publication alone does not implement queue acceptance or worker recovery.
 
 ## Check a conflict
@@ -197,6 +202,7 @@ rm -r "$exchange"
 Validation accepts regular files only and performs bounded reads.
 Each JSON document or bag line is limited to 1 MiB. A complete bag is limited to 16 MiB.
 An invocation reads at most 256 distinct files and 64 MiB in total.
+
 JSON nesting is limited to 32 levels. Reference depth is limited to eight files.
 A detected cycle, exceeded limit, or unavailable reference fails validation.
 

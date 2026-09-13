@@ -1,0 +1,15 @@
+{
+  "reference_version": 1,
+  "contract_version": 1,
+  "generation_command": "make demo",
+  "producer_source_sha256": "d3abd625e64158881bbd607a035c305d4ea61864949a2911df8554bcdc438576",
+  "source_hash_rule": "SHA-256 of sorted SHA256SUMS lines for go.mod, go.sum, cmd/**/*.go, and internal/**/*.go",
+  "volatile_fields": [
+    "result.attempt_id",
+    "result.timing",
+    "event.attempt_id",
+    "event.event_id",
+    "event.created_at_ms",
+    "event.result.sha256"
+  ]
+}

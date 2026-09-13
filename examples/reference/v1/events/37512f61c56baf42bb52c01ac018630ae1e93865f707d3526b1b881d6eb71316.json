@@ -1,0 +1,18 @@
+{
+  "contract_version": 1,
+  "kind": "event",
+  "execution_id": "stopped-candidate",
+  "job_id": "edge-score",
+  "attempt_id": "queue-5w5sahxsag53wyd2dxtrgmonep",
+  "event_id": "37512f61c56baf42bb52c01ac018630ae1e93865f707d3526b1b881d6eb71316",
+  "sequence": 3,
+  "state": "FAIL",
+  "analysis_id": "39b86574ae31043cf7236928c3dc556944331ddb5be04072eeb2a7ae1a33671d",
+  "result": {
+    "path": "results/39b86574ae31043cf7236928c3dc556944331ddb5be04072eeb2a7ae1a33671d.json",
+    "sha256": "9e48e62004e773ae91ef51bf1827f00ca78cb14ec1be8951dfa4c2603e74b079"
+  },
+  "event_type": "execution_transition",
+  "producer": "yamata",
+  "created_at_ms": 1789259231109
+}

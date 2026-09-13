@@ -1,0 +1,15 @@
+{
+  "contract_version": 1,
+  "kind": "event",
+  "execution_id": "stopped-candidate",
+  "job_id": "record-candidate",
+  "attempt_id": "queue-spose6sogvzkqopkei2ksiprsm",
+  "event_id": "242f7fcadc364e319e4458be387d320d07374175812005cb0e987cf6ab8afe12",
+  "sequence": 3,
+  "state": "ANALYZING",
+  "analysis_id": "5ebade5cb203e8b08615a31355e0a5af70e1cdcbcb5e6e4cf964010e8c86fc38",
+  "result": null,
+  "event_type": "execution_transition",
+  "producer": "yamata",
+  "created_at_ms": 1789259230489
+}

@@ -183,6 +183,7 @@ The new binary transactionally upgrades private queue schema versions one throug
 It reads each validated saved job and preserves accepted bytes, events, identities, and unfinished stages.
 The upgrade also preserves existing retry records, dispatch positions, and lease generations.
 It reserves each original analysis identity before accepting new analysis jobs.
+
 Invalid saved jobs roll back the complete upgrade.
 Unknown database versions are rejected.
 Public contract version one remains unchanged.

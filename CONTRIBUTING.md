@@ -25,11 +25,12 @@ From the repository root, run:
 
 ```sh
 make fmt
-make check
+make verify
 ```
 
 The formatting command updates Go source formatting.
-The check command requires formatted code and runs tests and static checks in both Go modules.
+Verification requires formatted code and runs tests and static checks in both Go modules.
+It also checks the complete demo, reference files, process recovery, and a detached reader build.
 It builds `bin/yamata` and `bin/reader`.
 Expect exit code `0` from both commands.
 Tests remove their temporary data automatically.
@@ -40,15 +41,17 @@ For cleanup, run:
 make clean
 ```
 
-This command removes the built binary.
+This command removes both built binaries.
 It preserves source files and data directories.
 
 Run the README examples when you change command behavior.
 Run the [contract walkthrough](docs/contract.md#validate-the-example) when you change the exchange boundary.
 After an intentional contract-file change, run `make generate` and review the updated file hashes and embedded schema.
-Then run `make check`. The tests reject stale generated files and invalid compatibility examples.
+Then run `make verify`. The tests reject stale generated files and invalid compatibility examples.
+
 In the review description, explain the behavior, its limits, and the checks you ran.
 Record the tested operating system and tool versions in that description.
+
 For worker, publication, or reader changes, run `python3 tests/operations.py` after building both binaries.
 This process check requires Python 3.11 or later and removes its temporary data automatically.
 
@@ -62,3 +65,11 @@ Apply this rule to code, comments, paths, test data, output, diagrams, documents
 Review every change for direct and indirect private references before publication.
 
 The [writing guide](docs/writing.md#names-and-terms) gives the terminology rules.
+
+## Reference examples
+
+Keep the version-one contract fixtures unchanged unless a reviewed compatibility correction requires it.
+Generated reference files have a separate version under `examples/reference/`.
+Follow the [reference export procedure](examples/reference/README.md#export-a-new-reference) when preparing an intentional update.
+Review source provenance, complete file hashes, stable scores, and consumer compatibility together.
+Do not replace reference results merely to make a changed score pass verification.

@@ -1,0 +1,66 @@
+{
+  "contract_version": 1,
+  "kind": "result",
+  "execution_id": "stopped-candidate",
+  "job_id": "edge-score",
+  "attempt_id": "queue-5w5sahxsag53wyd2dxtrgmonep",
+  "job": {
+    "path": "jobs/edge-score.json",
+    "sha256": "6e601aef344a07232733a5a12a0922bf3da94fe29bc4332b7592248340ad8cc4"
+  },
+  "inputs_hash": "7d0ead68b3bcde8432dd71a66272025bbe48cfe5f07b2b9b8d633b68310aaf1b",
+  "bag": {
+    "path": "bags/stopped-candidate.jsonl",
+    "sha256": "2f29d5ce47e405601017a3fd75f149150b3d460e26cd0898e543c37b6073e50b"
+  },
+  "analysis_id": "39b86574ae31043cf7236928c3dc556944331ddb5be04072eeb2a7ae1a33671d",
+  "analysis_template": {
+    "collision_count": {
+      "version": 1,
+      "maximum": 0
+    },
+    "minimum_obstacle_gap": {
+      "version": 2,
+      "minimum_mm": 0
+    },
+    "goal_progress": {
+      "version": 1,
+      "minimum_ppm": 1000000
+    }
+  },
+  "analysis_hash": "19985d27e4dd478cbb467ddda108473bbe0209c63cd45bec0cdd71434ebff4f6",
+  "status": "FAIL",
+  "failure_class": null,
+  "timing": {
+    "duration_ms": 1
+  },
+  "metrics": {
+    "collision_count": {
+      "value": 1,
+      "version": 1,
+      "unit": "count",
+      "pass": false,
+      "evidence_ticks": [
+        22
+      ]
+    },
+    "goal_progress": {
+      "value": 360000,
+      "version": 1,
+      "unit": "ppm",
+      "pass": false,
+      "evidence_ticks": [
+        22
+      ]
+    },
+    "minimum_obstacle_gap": {
+      "value": 0,
+      "version": 2,
+      "unit": "mm",
+      "pass": true,
+      "evidence_ticks": [
+        22
+      ]
+    }
+  }
+}

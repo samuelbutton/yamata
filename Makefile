@@ -1,6 +1,9 @@
 GO ?= go
+PYTHON ?= python3
+export GOWORK := off
+export PYTHONDONTWRITEBYTECODE := 1
 
-.PHONY: build test vet fmt generate check clean
+.PHONY: build test vet fmt generate check demo demo-clean verify clean
 
 build:
 	$(GO) build -trimpath -o bin/yamata ./cmd/yamata
@@ -24,6 +27,16 @@ generate:
 check:
 	@test -z "$$(gofmt -l cmd internal examples/reader)" || { gofmt -l cmd internal examples/reader; exit 1; }
 	$(MAKE) test vet build
+
+demo: build
+	$(PYTHON) scripts/demo.py
+
+demo-clean:
+	$(PYTHON) scripts/demo.py --clean
+
+verify: check
+	$(PYTHON) tests/walkthrough.py
+	$(PYTHON) tests/operations.py
 
 clean:
 	rm -f bin/yamata bin/reader

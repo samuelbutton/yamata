@@ -99,6 +99,7 @@ Consumers can validate the event's complete result and bag references.
 The queue uses [SQLite](https://sqlite.org/pragma.html) with a write-ahead log, full synchronization, foreign keys, and immediate write transactions.
 The pinned [Go driver](https://pkg.go.dev/modernc.org/sqlite) does not require a C compiler.
 A private `open.lock` serializes database initialization across processes.
+
 Each queue handle uses one database connection.
 Separate handles and local processes coordinate through SQLite transactions.
 Existing version-one through version-three queues upgrade transactionally on open; an unknown database version is rejected.
@@ -127,6 +128,7 @@ Use the first walkthrough's cleanup commands after these checks.
 Duplicate detection compares exact job bytes, including priority and optional metadata.
 The same job at another direct `jobs/*.json` path remains a duplicate; its first path owns the result reference.
 Changed bytes under an accepted job ID or path cause a conflict.
+
 Two run jobs cannot claim the same execution ID.
 Analysis jobs can share that execution ID but must select distinct analysis identities.
 Nested job paths are rejected by queue intake.
@@ -156,6 +158,7 @@ All queue processes must run on the same host.
 An abrupt process exit leaves its lease until expiration.
 A simulation restart can repeat computation that was never accepted.
 An analysis restart reuses the accepted bag.
+
 Lease recovery preserves the durable attempt ID and event sequence.
 An explicit worker-failure retry receives a new attempt ID.
 Run result duration includes elapsed time from the first simulation claim through scoring, including restart and handoff delays.

@@ -1,0 +1,29 @@
+{
+  "contract_version": 1,
+  "kind": "job",
+  "job_kind": "analysis",
+  "job_id": "edge-score",
+  "execution_id": "stopped-candidate",
+  "priority": 1,
+  "inputs": {
+    "bag": {
+      "path": "bags/stopped-candidate.jsonl",
+      "sha256": "2f29d5ce47e405601017a3fd75f149150b3d460e26cd0898e543c37b6073e50b"
+    },
+    "analysis_template": {
+      "collision_count": {
+        "version": 1,
+        "maximum": 0
+      },
+      "minimum_obstacle_gap": {
+        "version": 2,
+        "minimum_mm": 0
+      },
+      "goal_progress": {
+        "version": 1,
+        "minimum_ppm": 1000000
+      }
+    }
+  },
+  "inputs_hash": "7d0ead68b3bcde8432dd71a66272025bbe48cfe5f07b2b9b8d633b68310aaf1b"
+}

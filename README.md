@@ -1,55 +1,97 @@
 # Yamata
 
-Yamata is a teaching project for local simulation execution and analysis.
-The first example prepares a data directory through a command-line interface (CLI).
-The exchange validator checks versioned files and their references without changing them.
-The simulator runs three built-in scenarios with two braking controllers.
-The recorder saves immutable bags, and the inspector checks their content hashes and recorded motion.
-Standalone jobs calculate versioned metrics and publish immutable results and completion events.
-SQLite queues retain complete jobs and accepted outputs across worker restarts.
-Separate simulation and analysis pools process queued jobs.
-Priority classes select waiting work, and worker failures permit one retry per stage.
-Analysis jobs score saved bags with new metric versions while preserving earlier results.
-Queue inspection exposes progress, and controlled worker failures demonstrate recovery.
-An independent reader indexes published outcomes in its own database.
+## In plain language
+
+Yamata shows how a computer can test a driving decision in a simplified virtual world.
+A vehicle approaches an obstacle, and different braking rules show what happens when it brakes early or too late.
+The project records what happened and checks results, such as whether the vehicle hit the obstacle or reached its goal.
+
+You can check the same recording with different scoring rules without repeating the drive.
+The project also shows how interrupted work can continue and how another program can read the results independently.
+It is a small learning example that runs on your own computer.
+
+## Technical summary
+
+Yamata is a local teaching project for simulation, saved recordings, and versioned scoring.
+A deliberately late braking controller reaches an obstacle.
+Workers save the motion and calculate scores from that recording.
+An independent reader indexes the published outcomes in its own database.
 
 ## Run the first example
 
-Prerequisites: Go 1.25.13, GNU Make 3.81 or later, and a POSIX shell on macOS or Linux.
-Use an ordinary user account with write access to the checkout.
-Install the pinned Go dependencies with `go mod download` from the repository root.
-Then run `go mod download` from `examples/reader/` for the independent reader module.
-Builds, tests, and commands need no network connection after you install the tools and dependencies.
+Prerequisites: Go 1.25.13, GNU Make 3.81 or later, Python 3.11 or later, and a POSIX shell.
+Use an ordinary account with write access to this checkout on macOS or Linux.
+The local filesystem must support locks, hard links, and directory synchronization.
+No other checkout, service, credential, or C compiler is required.
+
+Install the pinned dependencies from the repository root:
+
+```sh
+go mod download
+(cd examples/reader && go mod download)
+```
+
+These commands download the declared dependencies into Go's module cache.
+Keep that cache for builds and tests.
+All remaining commands work without network access after installation.
 
 From the repository root, run:
 
 ```sh
-make build
-./bin/yamata --help
-./bin/yamata init
+make demo
+cat .yamata/demo/index.json
 ```
 
-The help command lists the available commands.
-The `init` command creates `.yamata` in the current directory.
-It prints `Data directory ready:` followed by the absolute path in quotes.
-The directory is empty after the check.
+The demo builds both commands and uses the [versioned jobs](examples/reference/v1/jobs/).
+It saves one bag, recovers one analysis failure, and calculates two results against the same recording.
+The second analysis runs with simulation disabled.
+Both results contain one collision and report `FAIL`.
 
-To check the same directory again, run:
+| Gap calculation | Minimum gap | Outcome |
+| --- | ---: | --- |
+| Version 1: center distance | 3,400 mm | `FAIL` |
+| Version 2: body-edge clearance | 0 mm | `FAIL` |
+
+Workers finish while the reader is stopped.
+The restarted reader handles duplicate events, then a separate reader rebuilds from results without events or producer state.
+Duplicate jobs preserve every published byte.
+The final output reports one bag, two results, eight events, and `passed`.
+The command returns exit code `0` when these checks succeed; it does not require passing simulation scores.
+
+The demo preserves its exchange, reader databases, and readable index under `.yamata/demo/`.
+It refuses an existing output directory so repeated commands cannot replace an experiment.
+After inspecting the files, clean up from the repository root:
 
 ```sh
-./bin/yamata init --data-dir .yamata
-```
-
-The command reports the same path and preserves existing files.
-For cleanup after this example, run:
-
-```sh
-rmdir .yamata
+make demo-clean
 make clean
 ```
 
-The `rmdir` command removes only an empty directory.
-The `make clean` command removes the built binary and preserves data directories.
+The first command removes only the demo directory with its original ownership marker.
+It rejects symbolic links in that directory's path and preserves other data under `.yamata/`.
+The second command removes only `bin/yamata` and `bin/reader`.
+Run `make demo` again after cleanup to create another experiment.
+
+## Verify the project
+
+Prerequisites: the tools and installed dependencies above.
+From the repository root, run:
+
+```sh
+make verify
+make clean
+```
+
+Verification checks formatting, builds, tests, and static checks in both Go modules.
+It runs the demo in a temporary directory and compares its stable content with the [reference exchange](examples/reference/README.md).
+It also checks cleanup boundaries, worker recovery, reader interruption, duplicate delivery, and failure outcomes.
+A copied reader builds separately and consumes only published files.
+Expect lines ending in `passed` and exit code `0`.
+
+Verification removes its temporary exchanges and reader databases automatically.
+It preserves existing demo data and source files.
+The cleanup command removes the built binaries.
+See [troubleshooting](docs/troubleshooting.md) if a command fails.
 
 ## Run a simulation
 
@@ -68,17 +110,35 @@ Each command prints its final observation and returns exit code `0` after a comp
 A collision is an observed event, not a passing score.
 The command writes no data files.
 
-Run `make clean` to remove the built binary.
+Run `make clean` to remove the built binaries.
 Read the [simulator guide](docs/simulator.md) for all scenarios, equations, and model limits.
 
 ## Data directory behavior
+
+Prerequisites: the tools and dependencies above.
+From the repository root, run:
+
+```sh
+make build
+./bin/yamata --help
+./bin/yamata init
+./bin/yamata init --data-dir .yamata
+```
+
+Help lists the commands without creating data.
+Initialization prints `Data directory ready:` and the absolute path in quotes.
+Repeating initialization preserves existing data.
+For cleanup, run `make clean` to remove the binaries.
+Remove `.yamata` with `rmdir .yamata` only when it is empty.
 
 To save a simulation, follow the [bag walkthrough](docs/bags.md#save-and-inspect-a-bag).
 It uses complete job files from [examples/jobs](examples/jobs/) and keeps generated bags in a temporary exchange directory.
 To record and score a job, follow the [metrics walkthrough](docs/metrics.md#run-and-score-a-job).
 The `run` command returns exit code `0` only for a `PASS` outcome.
 To import jobs and run durable worker pools, follow the [worker walkthrough](docs/workers.md#import-and-process-a-job).
+
 Use separate exchange directories for standalone and queued execution.
+
 Read the [recovery guide](docs/recovery.md) for priority order, retry limits, and existing queue upgrades.
 Follow the [reanalysis walkthrough](docs/reanalysis.md) to compare two gap versions against one unchanged recording.
 Use the [operations walkthrough](docs/operations.md) to inspect queues, control failures, and recover an independent reader.
@@ -102,10 +162,11 @@ Help does not create a data directory.
 
 ## Verify a rejected directory
 
-Prerequisites: the built binary, a POSIX shell, and an ordinary user account.
+Prerequisites: the built binaries, a POSIX shell, and an ordinary user account.
 From the repository root, run:
 
 ```sh
+make build
 check_dir=$(mktemp -d)
 chmod 500 "$check_dir"
 ./bin/yamata init --data-dir "$check_dir"
@@ -120,44 +181,9 @@ An administrator account can bypass permission checks. Do not use one for this e
 
 ## Code tour
 
-| Path | Responsibility |
-| --- | --- |
-| [cmd/yamata/main.go](cmd/yamata/main.go) | Parses commands, selects the data directory, and reports errors. |
-| [internal/datadir/dir.go](internal/datadir/dir.go) | Creates the directory and checks file access. |
-| [contract/v1/](contract/v1/) | Publishes schemas, compatibility examples, and file hashes. |
-| [internal/contract/](internal/contract/) | Validates file shapes, identities, references, and hashes. |
-| [cmd/yamata/validate.go](cmd/yamata/validate.go) | Exposes the read-only exchange validator. |
-| [internal/simulator/simulator.go](internal/simulator/simulator.go) | Advances integer motion and checks contact, goals, and limits. |
-| [internal/simulator/controller.go](internal/simulator/controller.go) | Selects when each built-in controller starts braking. |
-| [internal/simulator/examples.go](internal/simulator/examples.go) | Defines the three example scenarios. |
-| [cmd/yamata/simulate.go](cmd/yamata/simulate.go) | Runs an example and prints its final observation. |
-| [internal/bag/record.go](internal/bag/record.go) | Maps resolved jobs to simulations and encodes complete bags. |
-| [internal/bag/publish.go](internal/bag/publish.go) | Publishes complete files without replacing conflicting output. |
-| [internal/contract/bag.go](internal/contract/bag.go) | Reads complete bags and verifies pinned file hashes. |
-| [cmd/yamata/record.go](cmd/yamata/record.go) | Records a job and prints its bag hash. |
-| [cmd/yamata/inspect.go](cmd/yamata/inspect.go) | Inspects saved motion without running a simulation. |
-| [internal/metrics/metrics.go](internal/metrics/metrics.go) | Calculates versioned scores from saved motion. |
-| [internal/geometry/contact.go](internal/geometry/contact.go) | Shares swept contact geometry between simulation and scoring. |
-| [internal/standalone/run.go](internal/standalone/run.go) | Publishes standalone results before completion events. |
-| [internal/publication/publication.go](internal/publication/publication.go) | Stages, validates, and synchronizes immutable files. |
-| [cmd/yamata/execute.go](cmd/yamata/execute.go) | Runs one job and reports its authoritative outcome. |
-| [internal/queue/](internal/queue/) | Owns SQLite intake, stage leases, accepted outputs, and ordered outbox delivery. |
-| [internal/queue/migrate.go](internal/queue/migrate.go) | Upgrades saved queue state without changing accepted outputs. |
-| [examples/reader/](examples/reader/) | Independently validates published files and owns its result index and event progress. |
-| [internal/queue/inspect.go](internal/queue/inspect.go) | Reads queue snapshots without claiming or changing jobs. |
-| [internal/queue/fault.go](internal/queue/fault.go) | Configures deterministic failures before a job starts. |
-| [internal/queue/retry.go](internal/queue/retry.go) | Commits one worker-failure retry per stage with its next attempt event. |
-| [internal/execution/](internal/execution/) | Shares analysis identity, scoring outcomes, and run failure classification. |
-| [internal/ownership/](internal/ownership/) | Reserves one execution mode per exchange. |
-| [internal/filelock/](internal/filelock/) | Coordinates local processes with persistent file locks. |
-| [cmd/yamata/workers.go](cmd/yamata/workers.go) | Imports jobs and configures separate worker pools. |
-| [cmd/yamata/main_test.go](cmd/yamata/main_test.go) | Checks command behavior, defaults, errors, and help without writes. |
-| [internal/datadir/dir_test.go](internal/datadir/dir_test.go) | Checks file preservation, cleanup, invalid paths, and permission failures. |
-
-Command parsing passes an explicit path to the storage package.
-The storage package reads no environment variables and writes no console output.
-Workers run in the foreground until interrupted or drained.
-There are no external services or installed background schedules.
+Follow the [code tour](docs/code-tour.md) from complete job inputs through recording, scoring, publication, and independent reading.
+The [decision notes](docs/decisions.md) explain the boundaries and their costs.
+The [reference guide](examples/reference/README.md) supplies generated files for another reader implementation.
 
 Read the [contribution guide](CONTRIBUTING.md), [glossary](docs/glossary.md), and [writing rules](docs/writing.md) before changing the project.
 Follow the [exchange contract walkthrough](docs/contract.md) to trace a job through its event and result.

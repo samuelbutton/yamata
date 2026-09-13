@@ -1,0 +1,15 @@
+{
+  "contract_version": 1,
+  "kind": "event",
+  "execution_id": "stopped-candidate",
+  "job_id": "edge-score",
+  "attempt_id": "queue-5w5sahxsag53wyd2dxtrgmonep",
+  "event_id": "829cd727c520a267f49840bb2cae3d02d3739769a34d4ee8879500632fd9f409",
+  "sequence": 1,
+  "state": "PENDING",
+  "analysis_id": null,
+  "result": null,
+  "event_type": "execution_transition",
+  "producer": "yamata",
+  "created_at_ms": 1789259231040
+}

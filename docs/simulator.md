@@ -39,7 +39,7 @@ For cleanup, run:
 make clean
 ```
 
-This command removes the built binary. There are no simulation files to remove.
+This command removes the built binaries. There are no simulation files to remove.
 
 ## World and units
 
@@ -163,6 +163,7 @@ The core accepts tick durations from 1 to 1,000 ms and budgets from 1 to 100,000
 It accepts at most 32 obstacles and returns at most the initial record plus the step budget.
 Positions and goals lie within ±1,000,000,000 mm.
 Initial speeds range from zero to 1,000,000 mm/s. Lengths range from 1 to 1,000,000 mm.
+
 The full coast path must remain within the position range, even when braking would end the example earlier.
 This conservative check bounds arithmetic and keeps obstacle records within the version-one contract limits.
 

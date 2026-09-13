@@ -173,4 +173,4 @@ Concurrent identical recordings share one accepted bag; conflicting recordings c
 
 Publication does not create queue entries, scores, results, or events.
 The separate [standalone run command](metrics.md) records a bag, then calculates scores and publishes its outcome.
-Durable job intake and worker recovery belong to later changes.
+The [queued workers](workers.md) add durable intake, accepted output ownership, and recovery across process restarts.
